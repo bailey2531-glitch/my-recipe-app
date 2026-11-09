@@ -1,5 +1,6 @@
-// 홈 화면. 입력 카드(링크/텍스트/이미지) + "보내기" → 변환 흐름.
+// 홈 화면. 입력 카드(링크/텍스트/이미지) + "보내기" → 변환 흐름 + 공유받기 자동 채움.
 import { sendToConvert } from "../recipeConvert.js";
+import { readShareParams, extractSharedUrl, clearShareParams } from "../shareTarget.js";
 
 const INSTAGRAM_TIKTOK_PATTERN = /instagram\.com|tiktok\.com/i;
 
@@ -92,6 +93,19 @@ export function renderHome(container) {
     instagramHint.hidden = true;
     imageInput.value = "";
     imagePreview.hidden = true;
+  }
+
+  // 유튜브·인스타 앱의 "공유"에서 이 앱으로 들어온 경우, 링크를 자동으로 채운다.
+  // 실수로 바로 전송되지 않게, 입력칸만 채우고 "보내기"는 사용자가 직접 누르게 한다.
+  const sharedParams = readShareParams();
+  if (sharedParams) {
+    const sharedUrl = extractSharedUrl(sharedParams);
+    if (sharedUrl) {
+      linkInput.value = sharedUrl;
+      instagramHint.hidden = !INSTAGRAM_TIKTOK_PATTERN.test(sharedUrl);
+      status.textContent = "공유받은 링크를 넣었어요. 확인하고 보내기를 눌러주세요.";
+    }
+    clearShareParams();
   }
 
   sendBtn.addEventListener("click", async () => {
