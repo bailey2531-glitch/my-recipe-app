@@ -78,6 +78,49 @@ body {
   font-size: 14px;
 }
 
+.field-label {
+  display: block;
+  margin: 16px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.key-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.key-input-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.btn-primary,
+.btn-ghost {
+  font-size: 14px;
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.btn-ghost {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
 .card {
   background: var(--color-bg);
   border-radius: var(--radius-card);
