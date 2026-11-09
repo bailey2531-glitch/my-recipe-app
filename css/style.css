@@ -1,0 +1,53 @@
+/* 색상·간격 등 디자인 기본값을 한 곳에서 관리 (CSS 변수) */
+:root {
+  --color-accent: #ff6f61;       /* 강조색: 코랄 */
+  --color-accent-light: #ffe4de; /* 연한 코랄/핑크 (배경용) */
+  --color-bg: #ffffff;
+  --color-bg-alt: #f6f6f6;       /* 연회색 배경 */
+  --color-text: #222222;
+  --color-text-muted: #777777;
+  --radius-card: 16px;
+  --max-width: 430px; /* 모바일 우선, 큰 화면에서도 폭 제한 */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  font-family: -apple-system, "Noto Sans KR", "Apple SD Gothic Neo", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+#app {
+  max-width: var(--max-width);
+  min-height: 100vh;
+  margin: 0 auto;
+  background: var(--color-bg);
+  padding: 16px;
+  padding-bottom: 80px; /* 하단 탭바에 가리지 않도록 */
+}
+
+#tab-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--max-width);
+  min-height: 60px;
+  background: var(--color-bg);
+  border-top: 1px solid #eee;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+}
+
+.card {
+  background: var(--color-bg);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  padding: 16px;
+}

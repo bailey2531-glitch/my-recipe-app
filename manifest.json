@@ -1,0 +1,20 @@
+{
+  "name": "My Recipe",
+  "short_name": "My Recipe",
+  "description": "SNS 요리 영상을 레시피로 바꿔 모아두는 개인용 앱",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6f61",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

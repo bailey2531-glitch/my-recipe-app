@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- 임시 아이콘: 코랄색 원 + 그릇·숟가락 모양. 참고 앱 로고와 무관한 직접 제작 아이콘 -->
+  <rect width="192" height="192" rx="40" fill="#ff6f61"/>
+  <circle cx="96" cy="108" r="50" fill="#fff8f6"/>
+  <path d="M96 58 L96 98" stroke="#ff6f61" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="96" cy="50" r="10" fill="#ff6f61"/>
+</svg>
