@@ -3,6 +3,8 @@ import { getAllRecipes, deleteRecipe } from "../db.js";
 import { retryRecipe } from "../recipeConvert.js";
 import { escapeHtml } from "../htmlUtil.js";
 import { PLATFORM_LABEL } from "../platformLabel.js";
+import { getAllBooks, getRecipesForBook } from "../bookService.js";
+import { openBookPicker } from "../bookPicker.js";
 
 function matchesFilters(recipe, { searchText, activeChips }) {
   if (searchText && !recipe.title.toLowerCase().includes(searchText)) {
@@ -51,6 +53,7 @@ function rowHtml(recipe) {
       <details class="row-menu">
         <summary>⋮</summary>
         <div class="row-menu-list">
+          <button type="button" class="book-add-btn" data-id="${recipe.id}">레시피북에 추가</button>
           <button type="button" class="delete-btn" data-id="${recipe.id}">삭제</button>
         </div>
       </details>
@@ -58,10 +61,13 @@ function rowHtml(recipe) {
   `;
 }
 
-export function renderRecipes(container) {
+export async function renderRecipes(container, bookId) {
+  const books = bookId ? await getAllBooks() : [];
+  const bookTitle = bookId ? books.find((b) => b.id === bookId)?.name || "레시피북" : "저장된 레시피";
+
   container.innerHTML = `
     <section class="card">
-      <h1>저장된 레시피</h1>
+      <h1>${escapeHtml(bookTitle)}</h1>
       <input id="recipe-search" class="text-input" type="search" placeholder="레시피 이름으로 검색" />
 
       <div class="filter-chip-row">
@@ -94,7 +100,7 @@ export function renderRecipes(container) {
   const state = { activeChips: new Set() };
 
   async function refresh() {
-    const all = await getAllRecipes();
+    const all = bookId ? await getRecipesForBook(bookId) : await getAllRecipes();
     const searchText = searchInput.value.trim().toLowerCase();
     const filtered = all.filter((r) => matchesFilters(r, { searchText, activeChips: state.activeChips }));
     const sorted = sortRecipes(filtered, sortSelect.value);
@@ -122,7 +128,13 @@ export function renderRecipes(container) {
   listEl.addEventListener("click", async (event) => {
     const retryBtn = event.target.closest(".retry-btn");
     const deleteBtn = event.target.closest(".delete-btn");
+    const bookAddBtn = event.target.closest(".book-add-btn");
     const menuEl = event.target.closest(".row-menu");
+
+    if (bookAddBtn) {
+      openBookPicker(bookAddBtn.dataset.id, { onChanged: refresh });
+      return;
+    }
 
     if (retryBtn) {
       const id = retryBtn.dataset.id;

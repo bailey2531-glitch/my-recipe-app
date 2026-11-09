@@ -920,3 +920,126 @@ body {
   text-decoration: line-through;
   color: var(--color-text-muted);
 }
+
+.book-new-row {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.book-new-row .text-input {
+  flex: 1;
+}
+
+.book-new-row .btn-primary {
+  width: auto;
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.book-card {
+  position: relative;
+  display: block;
+  background: var(--color-bg);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  padding: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.book-collage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 3px;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.book-collage-cell {
+  background-color: var(--color-bg-alt);
+  background-size: cover;
+  background-position: center;
+}
+
+.book-card-footer {
+  margin-top: 8px;
+}
+
+.book-card-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-card-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+}
+
+.book-rename-btn,
+.book-delete-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.book-picker-list {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.book-picker-row {
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 15px;
+}
+
+.book-picker-row label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.book-picker-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-accent);
+}
+
+.book-picker-new-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.book-picker-new-row .text-input {
+  flex: 1;
+}
+
+.book-picker-new-row .btn-primary {
+  width: auto;
+  margin-top: 0;
+  white-space: nowrap;
+}

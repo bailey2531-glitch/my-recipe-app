@@ -9,19 +9,8 @@ import { resizeImage } from "../imageResize.js";
 import { addCookRecord, updateCookRecord, deleteCookRecord } from "../cookLog.js";
 import { shareRecipeLink } from "../shareLink.js";
 import { addIngredientToCart, addAllIngredientsToCart, getCartedIngredientNames, getCartCount } from "../shoppingCart.js";
-
-function extractYoutubeVideoId(url) {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes("youtu.be")) return u.pathname.slice(1);
-    if (u.searchParams.get("v")) return u.searchParams.get("v");
-    const shortsMatch = u.pathname.match(/\/shorts\/([^/?]+)/);
-    if (shortsMatch) return shortsMatch[1];
-    return null;
-  } catch {
-    return null;
-  }
-}
+import { extractYoutubeVideoId } from "../youtubeUrl.js";
+import { openBookPicker } from "../bookPicker.js";
 
 function formatTimestamp(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -317,7 +306,7 @@ export async function renderRecipeDetail(container, id) {
       ${recipe.summary ? `<p class="summary-text">${escapeHtml(recipe.summary)}</p>` : ""}
 
       <div class="action-row">
-        <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">저장</button>
+        <button type="button" class="btn-ghost" id="save-btn">저장</button>
         <button type="button" class="${cookBtnClass}" id="cook-btn">${cookBtnLabel}</button>
         <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">편집</button>
         ${
@@ -405,6 +394,10 @@ export async function renderRecipeDetail(container, id) {
 
   container.querySelector("#cook-btn").addEventListener("click", () => {
     openCookSheet({ recipeId: id, onSaved: refresh });
+  });
+
+  container.querySelector("#save-btn").addEventListener("click", () => {
+    openBookPicker(id, { onChanged: refresh });
   });
 
   const shareBtn = container.querySelector("#share-btn");

@@ -1,10 +1,11 @@
 // 레시피를 폰 안(IndexedDB)에 저장/조회/수정/삭제하는 함수 모음.
 // SPEC.md 3장 데이터 구조(Recipe)를 그대로 저장소 레벨에서 다룬다.
 const DB_NAME = "myrecipe";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const STORE_RECIPES = "recipes";
 const STORE_PHOTOS = "photos"; // "해먹었어요" 기록 사진(Blob)을 따로 저장한다
 const STORE_SHOPPING = "shoppingItems"; // 장보기 목록에 담긴 재료
+const STORE_BOOKS = "books"; // 레시피북(레시피 모음)
 
 let dbPromise = null;
 
@@ -27,6 +28,9 @@ function openDb() {
       }
       if (!db.objectStoreNames.contains(STORE_SHOPPING)) {
         db.createObjectStore(STORE_SHOPPING, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(STORE_BOOKS)) {
+        db.createObjectStore(STORE_BOOKS, { keyPath: "id" });
       }
     };
 
@@ -143,4 +147,30 @@ export async function updateShoppingItem(id, patch) {
 
 export function deleteShoppingItem(id) {
   return runTransaction(STORE_SHOPPING, "readwrite", (store) => store.delete(id));
+}
+
+// 레시피북을 새로 만든다.
+export async function addBook(book) {
+  const toSave = { ...book, id: book.id || makeId(), createdAt: new Date().toISOString() };
+  await runTransaction(STORE_BOOKS, "readwrite", (store) => store.add(toSave));
+  return toSave;
+}
+
+export function getAllBooks() {
+  return runTransaction(STORE_BOOKS, "readonly", (store) => store.getAll());
+}
+
+export async function updateBook(id, patch) {
+  const all = await getAllBooks();
+  const existing = all.find((book) => book.id === id);
+  if (!existing) {
+    throw new Error(`레시피북을 찾을 수 없어요: ${id}`);
+  }
+  const updated = { ...existing, ...patch, id };
+  await runTransaction(STORE_BOOKS, "readwrite", (store) => store.put(updated));
+  return updated;
+}
+
+export function deleteBook(id) {
+  return runTransaction(STORE_BOOKS, "readwrite", (store) => store.delete(id));
 }
