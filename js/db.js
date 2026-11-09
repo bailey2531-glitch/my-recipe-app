@@ -174,3 +174,30 @@ export async function updateBook(id, patch) {
 export function deleteBook(id) {
   return runTransaction(STORE_BOOKS, "readwrite", (store) => store.delete(id));
 }
+
+// 사진 원본 전체를 가져온다(백업 내보내기용).
+export function getAllPhotos() {
+  return runTransaction(STORE_PHOTOS, "readonly", (store) => store.getAll());
+}
+
+// 백업을 불러올 때, id/날짜를 새로 만들지 않고 파일에 있던 그대로 저장한다.
+export function putRecipeRaw(recipe) {
+  return runTransaction(STORE_RECIPES, "readwrite", (store) => store.put(recipe));
+}
+export function putBookRaw(book) {
+  return runTransaction(STORE_BOOKS, "readwrite", (store) => store.put(book));
+}
+export function putShoppingItemRaw(item) {
+  return runTransaction(STORE_SHOPPING, "readwrite", (store) => store.put(item));
+}
+export function putPhotoRaw(photo) {
+  return runTransaction(STORE_PHOTOS, "readwrite", (store) => store.put(photo));
+}
+
+// 레시피·레시피북·장보기·사진을 전부 지운다("전체 삭제" 기능용).
+export async function clearAllData() {
+  await runTransaction(STORE_RECIPES, "readwrite", (store) => store.clear());
+  await runTransaction(STORE_BOOKS, "readwrite", (store) => store.clear());
+  await runTransaction(STORE_SHOPPING, "readwrite", (store) => store.clear());
+  await runTransaction(STORE_PHOTOS, "readwrite", (store) => store.clear());
+}

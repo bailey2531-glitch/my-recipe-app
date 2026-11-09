@@ -1043,3 +1043,22 @@ body {
   margin-top: 0;
   white-space: nowrap;
 }
+
+.btn-danger {
+  color: #c0392b;
+}
+
+.btn-danger-filled {
+  background: #c0392b;
+}
+
+.danger-text {
+  color: #c0392b;
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+#import-input {
+  width: 100%;
+  margin-top: 4px;
+}
