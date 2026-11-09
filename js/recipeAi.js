@@ -1,17 +1,7 @@
 // 영상/캡션/텍스트/이미지를 Gemini에 보내 레시피 JSON으로 바꾸는 함수.
 // 규칙은 SPEC.md 4-2(입력별 처리), 4-3(출력 형식)을 그대로 따른다.
 import { callGeminiJson } from "./geminiClient.js";
-
-// SPEC.md 2-11 장보기 카테고리 목록과 동일해야 한다.
-const INGREDIENT_CATEGORIES = [
-  "정육/계란류",
-  "채소/과일",
-  "수산물",
-  "양념/소스",
-  "유제품",
-  "곡류/면",
-  "기타",
-];
+import { INGREDIENT_CATEGORIES } from "./ingredientCategories.js";
 
 const RECIPE_SCHEMA = {
   type: "object",
