@@ -748,3 +748,20 @@ body {
   width: 100%;
   margin-top: 8px;
 }
+
+.share-link-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.share-link-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.share-link-row .btn-primary {
+  width: auto;
+  margin-top: 0;
+  white-space: nowrap;
+}

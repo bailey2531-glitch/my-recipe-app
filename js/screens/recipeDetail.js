@@ -7,6 +7,7 @@ import { createYoutubePlayer, seekTo } from "../youtubePlayer.js";
 import { flowerIcon } from "../icons.js";
 import { resizeImage } from "../imageResize.js";
 import { addCookRecord, updateCookRecord, deleteCookRecord } from "../cookLog.js";
+import { shareRecipeLink } from "../shareLink.js";
 
 function extractYoutubeVideoId(url) {
   try {
@@ -310,7 +311,11 @@ export async function renderRecipeDetail(container, id) {
         <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">저장</button>
         <button type="button" class="${cookBtnClass}" id="cook-btn">${cookBtnLabel}</button>
         <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">편집</button>
-        <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">공유</button>
+        ${
+          recipe.source?.url
+            ? `<button type="button" class="btn-ghost" id="share-btn">공유</button>`
+            : `<button type="button" class="btn-ghost" disabled title="원본 링크가 없는 레시피예요">공유</button>`
+        }
       </div>
     </section>
 
@@ -383,6 +388,11 @@ export async function renderRecipeDetail(container, id) {
 
   container.querySelector("#cook-btn").addEventListener("click", () => {
     openCookSheet({ recipeId: id, onSaved: refresh });
+  });
+
+  const shareBtn = container.querySelector("#share-btn");
+  shareBtn?.addEventListener("click", () => {
+    shareRecipeLink({ title: recipe.title, url: recipe.source.url });
   });
 
   container.addEventListener(
