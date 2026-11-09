@@ -5,23 +5,27 @@ import { renderBooks } from "./screens/books.js";
 import { renderShopping } from "./screens/shopping.js";
 import { renderSettings } from "./screens/settings.js";
 import { renderRecipes } from "./screens/recipes.js";
+import { renderRecipeDetail } from "./screens/recipeDetail.js";
 import { TAB_ICONS } from "./icons.js";
 
-// tab: true인 항목만 하단 탭바에 나타난다. 저장된 레시피 목록(recipes)은
-// 하단 탭이 아니라 홈 화면의 "전체보기" 링크로 들어가는 화면이다.
+// tab: true인 항목만 하단 탭바에 나타난다. 저장된 레시피 목록(recipes)·상세(recipe)는
+// 하단 탭이 아니라 다른 화면에서 링크를 눌러 들어가는 화면이다.
 const ROUTES = {
   home: { render: renderHome, label: "홈", tab: true },
   books: { render: renderBooks, label: "레시피북", tab: true },
   shopping: { render: renderShopping, label: "장보기", tab: true },
   settings: { render: renderSettings, label: "설정", tab: true },
   recipes: { render: renderRecipes, label: "저장된 레시피" },
+  recipe: { render: renderRecipeDetail, label: "레시피 상세" }, // #recipe/<id> 형태로 쓴다
 };
 
 const DEFAULT_ROUTE = "home";
 
-function currentRouteKey() {
+// "#recipe/abc123" 처럼 /뒤에 값이 붙은 주소를 { key: 'recipe', param: 'abc123' }로 나눈다.
+function parseHash() {
   const hash = location.hash.replace("#", "");
-  return ROUTES[hash] ? hash : DEFAULT_ROUTE;
+  const [key, param] = hash.split("/");
+  return { key: ROUTES[key] ? key : DEFAULT_ROUTE, param };
 }
 
 function buildTabBar() {
@@ -45,9 +49,9 @@ function updateTabBar(activeKey) {
 }
 
 function renderCurrentScreen() {
-  const key = currentRouteKey();
+  const { key, param } = parseHash();
   const app = document.getElementById("app");
-  ROUTES[key].render(app);
+  ROUTES[key].render(app, param);
   updateTabBar(key);
   window.scrollTo(0, 0);
 }

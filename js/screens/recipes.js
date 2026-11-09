@@ -1,19 +1,8 @@
 // 저장된 레시피 목록 화면. SPEC.md 2-10: 검색, 필터 칩, 정렬, 상태 표시(생성 대기중/실패).
 import { getAllRecipes, deleteRecipe } from "../db.js";
 import { retryRecipe } from "../recipeConvert.js";
-
-const PLATFORM_LABEL = {
-  youtube: "▶️ 유튜브",
-  instagram: "📸 인스타",
-  tiktok: "🎵 틱톡",
-  web: "🔗 웹",
-  text: "📝 텍스트",
-  image: "🖼️ 이미지",
-};
-
-function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
+import { escapeHtml } from "../htmlUtil.js";
+import { PLATFORM_LABEL } from "../platformLabel.js";
 
 function matchesFilters(recipe, { searchText, activeChips }) {
   if (searchText && !recipe.title.toLowerCase().includes(searchText)) {
@@ -133,6 +122,7 @@ export function renderRecipes(container) {
   listEl.addEventListener("click", async (event) => {
     const retryBtn = event.target.closest(".retry-btn");
     const deleteBtn = event.target.closest(".delete-btn");
+    const menuEl = event.target.closest(".row-menu");
 
     if (retryBtn) {
       const id = retryBtn.dataset.id;
@@ -147,6 +137,7 @@ export function renderRecipes(container) {
         statusEl.textContent = err.message;
       }
       refresh();
+      return;
     }
 
     if (deleteBtn) {
@@ -154,6 +145,15 @@ export function renderRecipes(container) {
       if (window.confirm("이 레시피를 삭제할까요?")) {
         await deleteRecipe(id);
         refresh();
+      }
+      return;
+    }
+
+    // ⋮ 메뉴 자체를 누른 게 아니면, 행을 눌렀을 때 상세 화면으로 이동한다.
+    if (!menuEl) {
+      const row = event.target.closest(".recipe-row");
+      if (row) {
+        location.hash = `#recipe/${row.dataset.id}`;
       }
     }
   });
