@@ -1,8 +1,28 @@
-// 레시피 상세 화면(레이아웃). SPEC.md 2-5: 요약 카드, 재료, 도구, 조리 순서, 팁 박스.
-// 원본 영역(유튜브 임베드·타임스탬프)은 11번 작업에서, 저장/해먹었어요/편집/공유 동작은 그 이후 작업에서 연결한다.
+// 레시피 상세 화면. SPEC.md 2-5: 요약 카드, 원본 영역(유튜브 임베드), 재료, 도구, 조리 순서, 팁 박스.
+// 저장/해먹었어요/편집/공유/장바구니 담기 동작은 각자 담당 작업에서 연결한다.
 import { getRecipe } from "../db.js";
 import { escapeHtml } from "../htmlUtil.js";
 import { PLATFORM_LABEL } from "../platformLabel.js";
+import { createYoutubePlayer, seekTo } from "../youtubePlayer.js";
+
+function extractYoutubeVideoId(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtu.be")) return u.pathname.slice(1);
+    if (u.searchParams.get("v")) return u.searchParams.get("v");
+    const shortsMatch = u.pathname.match(/\/shorts\/([^/?]+)/);
+    if (shortsMatch) return shortsMatch[1];
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function formatTimestamp(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
 
 // 단계 설명 안에서 도구 이름(highlights)만 파란 글씨로 강조한다.
 function highlightText(text, highlights) {
@@ -24,24 +44,50 @@ function ingredientChipsHtml(ingredientIds, ingredientsById) {
   return chips ? `<div class="step-chips">${chips}</div>` : "";
 }
 
-function stepHtml(step, ingredientsById) {
+function stepHtml(step, ingredientsById, showTimestamp) {
   const tipHtml = step.tip ? `<div class="tip-box">${escapeHtml(step.tip)}</div>` : "";
+  const timestampBtn =
+    showTimestamp && step.timestampSec != null
+      ? `<button type="button" class="timestamp-btn" data-sec="${step.timestampSec}">▶ ${formatTimestamp(step.timestampSec)}</button>`
+      : "";
   return `
     <li class="step-item">
-      <p class="step-text">${highlightText(step.text, step.highlights)}</p>
+      <div class="step-text-row">
+        <p class="step-text">${highlightText(step.text, step.highlights)}</p>
+        ${timestampBtn}
+      </div>
       ${ingredientChipsHtml(step.ingredientIds, ingredientsById)}
       ${tipHtml}
     </li>
   `;
 }
 
-function stepGroupHtml(group, index, ingredientsById) {
+function stepGroupHtml(group, index, ingredientsById, showTimestamp) {
   return `
     <div class="step-group">
       <h3 class="step-group-title">${index + 1}단계 · ${escapeHtml(group.title)}</h3>
       <ol class="step-list">
-        ${(group.steps || []).map((s) => stepHtml(s, ingredientsById)).join("")}
+        ${(group.steps || []).map((s) => stepHtml(s, ingredientsById, showTimestamp)).join("")}
       </ol>
+    </div>
+  `;
+}
+
+// 유튜브면 영상을 바로 재생할 수 있게 임베드 자리를 만들고,
+// 그 외(인스타·틱톡·웹)는 썸네일 + "원본 보기" 링크만 보여준다(새 창으로 열기).
+function sourceSectionHtml(recipe, youtubeVideoId) {
+  const { platform, url, thumbnail } = recipe.source || {};
+
+  if (platform === "youtube" && youtubeVideoId) {
+    return `<div class="yt-embed-wrap"><div id="yt-player"></div></div>`;
+  }
+
+  if (!url) return "";
+
+  return `
+    <div class="source-fallback">
+      ${thumbnail ? `<img src="${escapeHtml(thumbnail)}" class="source-thumb" alt="원본 썸네일" />` : `<div class="source-thumb placeholder"></div>`}
+      <a class="btn-ghost source-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">원본 보기 ↗</a>
     </div>
   `;
 }
@@ -72,6 +118,8 @@ export async function renderRecipeDetail(container, id) {
   const ingredientsById = new Map((recipe.ingredients || []).map((ing) => [ing.id, ing]));
   const platform = PLATFORM_LABEL[recipe.source?.platform] || "";
   const nutrition = recipe.nutrition;
+  const isYoutube = recipe.source?.platform === "youtube";
+  const youtubeVideoId = isYoutube ? extractYoutubeVideoId(recipe.source.url) : null;
 
   container.innerHTML = `
     <div class="detail-header">
@@ -80,7 +128,7 @@ export async function renderRecipeDetail(container, id) {
     </div>
 
     <section class="card">
-      <p class="muted">원본 보기 영역(영상·타임스탬프)은 다음 작업에서 추가됩니다.</p>
+      ${sourceSectionHtml(recipe, youtubeVideoId)}
 
       <h1>${escapeHtml(recipe.title)}</h1>
       <p class="muted">${platform}${recipe.source?.creator ? " · " + escapeHtml(recipe.source.creator) : ""}</p>
@@ -123,7 +171,7 @@ export async function renderRecipeDetail(container, id) {
 
     <section class="card">
       <h2>조리 순서</h2>
-      ${(recipe.stepGroups || []).map((g, i) => stepGroupHtml(g, i, ingredientsById)).join("")}
+      ${(recipe.stepGroups || []).map((g, i) => stepGroupHtml(g, i, ingredientsById, Boolean(youtubeVideoId))).join("")}
     </section>
 
     ${
@@ -146,4 +194,18 @@ export async function renderRecipeDetail(container, id) {
   container.querySelector("#back-btn").addEventListener("click", () => {
     location.hash = "#recipes";
   });
+
+  if (youtubeVideoId) {
+    let player = null;
+    createYoutubePlayer("yt-player", youtubeVideoId).then((p) => {
+      player = p;
+    });
+
+    container.addEventListener("click", (event) => {
+      const btn = event.target.closest(".timestamp-btn");
+      if (btn) {
+        seekTo(player, Number(btn.dataset.sec));
+      }
+    });
+  }
 }
