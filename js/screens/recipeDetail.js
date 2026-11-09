@@ -8,6 +8,7 @@ import { flowerIcon } from "../icons.js";
 import { resizeImage } from "../imageResize.js";
 import { addCookRecord, updateCookRecord, deleteCookRecord } from "../cookLog.js";
 import { shareRecipeLink } from "../shareLink.js";
+import { addIngredientToCart, addAllIngredientsToCart, getCartedIngredientNames, getCartCount } from "../shoppingCart.js";
 
 function extractYoutubeVideoId(url) {
   try {
@@ -284,10 +285,18 @@ export async function renderRecipeDetail(container, id) {
   const cookBtnLabel = cooks.length > 0 ? `✓ ${cooks.length}번 해먹었어요` : "해먹었어요";
   const cookBtnClass = cooks.length > 0 ? "btn-ghost cooked" : "btn-ghost";
 
+  const cartedNames = await getCartedIngredientNames(id);
+  const cartCount = await getCartCount();
+  const allIngredientsCarted =
+    (recipe.ingredients || []).length > 0 && (recipe.ingredients || []).every((ing) => cartedNames.has(ing.name.trim().toLowerCase()));
+
   container.innerHTML = `
     <div class="detail-header">
       <button type="button" class="back-btn" id="back-btn">←</button>
-      <span class="cart-icon" title="장보기 담기는 다음 작업에서 연결됩니다">🧺</span>
+      <a class="cart-icon-wrap" href="#shopping" title="장보기 목록 보기">
+        🧺
+        ${cartCount > 0 ? `<span class="cart-badge">${cartCount}</span>` : ""}
+      </a>
     </div>
 
     <section class="card">
@@ -322,17 +331,25 @@ export async function renderRecipeDetail(container, id) {
     ${cookSectionHtml(cooks, photoUrls)}
 
     <section class="card">
-      <h2>재료</h2>
+      <div class="ingredient-header">
+        <h2>재료</h2>
+        ${
+          (recipe.ingredients || []).length
+            ? `<button type="button" class="btn-ghost" id="cart-add-all-btn" ${allIngredientsCarted ? "disabled" : ""}>${allIngredientsCarted ? "✓ 모두 담음" : "전체 담기"}</button>`
+            : ""
+        }
+      </div>
       <ul class="ingredient-list">
         ${(recipe.ingredients || [])
-          .map(
-            (ing) => `
+          .map((ing) => {
+            const carted = cartedNames.has(ing.name.trim().toLowerCase());
+            return `
           <li class="ingredient-row">
             <span>${escapeHtml(ing.name)}</span>
             <span class="muted">${escapeHtml(ing.amount)}${ing.unit ? " " + escapeHtml(ing.unit) : ""}</span>
-            <button type="button" class="cart-add-btn" disabled title="다음 작업에서 연결됩니다">+</button>
-          </li>`
-          )
+            <button type="button" class="cart-add-btn ${carted ? "added" : ""}" data-name="${escapeHtml(ing.name)}" ${carted ? "disabled" : ""}>${carted ? "✓" : "+"}</button>
+          </li>`;
+          })
           .join("")}
       </ul>
       ${(recipe.tools || []).length ? `<p class="muted">도구 · ${recipe.tools.length}개 (${recipe.tools.map((t) => escapeHtml(t.name)).join(", ")})</p>` : ""}
@@ -393,6 +410,20 @@ export async function renderRecipeDetail(container, id) {
   const shareBtn = container.querySelector("#share-btn");
   shareBtn?.addEventListener("click", () => {
     shareRecipeLink({ title: recipe.title, url: recipe.source.url });
+  });
+
+  container.querySelector("#cart-add-all-btn")?.addEventListener("click", async () => {
+    await addAllIngredientsToCart(recipe.ingredients || [], id, recipe.title);
+    refresh();
+  });
+
+  container.querySelectorAll(".cart-add-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const ingredient = (recipe.ingredients || []).find((ing) => ing.name === btn.dataset.name);
+      if (!ingredient) return;
+      await addIngredientToCart(ingredient, id, recipe.title);
+      refresh();
+    });
   });
 
   container.addEventListener(
