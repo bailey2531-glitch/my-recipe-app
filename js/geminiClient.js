@@ -5,15 +5,17 @@ import { GEMINI_MODEL } from "./config.js";
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-// 텍스트 프롬프트를 보내고, 지정한 JSON 스키마 형태의 응답을 받는다.
-export async function callGeminiJson({ apiKey, prompt, responseSchema }) {
+// 요청 내용(텍스트/유튜브 링크/이미지 등)을 보내고, 지정한 JSON 스키마 형태의 응답을 받는다.
+// prompt(텍스트 한 덩어리) 또는 parts(텍스트+영상+이미지를 섞은 배열) 중 하나를 넘긴다.
+export async function callGeminiJson({ apiKey, prompt, parts, responseSchema }) {
   const url = `${API_BASE}/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const contentParts = parts || [{ text: prompt }];
 
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: [{ parts: contentParts }],
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema,
