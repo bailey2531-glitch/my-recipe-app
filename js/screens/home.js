@@ -1,5 +1,6 @@
-// 홈 화면. 입력 카드(링크/텍스트/이미지)를 만든다.
-// "보내기"를 누르면 실제로 저장하고 Gemini를 호출하는 건 8번 작업에서 연결한다.
+// 홈 화면. 입력 카드(링크/텍스트/이미지) + "보내기" → 변환 흐름.
+import { sendToConvert } from "../recipeConvert.js";
+
 const INSTAGRAM_TIKTOK_PATTERN = /instagram\.com|tiktok\.com/i;
 
 export function renderHome(container) {
@@ -77,13 +78,25 @@ export function renderHome(container) {
     imagePreview.hidden = false;
   });
 
+  const textInput = container.querySelector("#text-input");
+  const captionInput = container.querySelector("#caption-input");
   const sendBtn = container.querySelector("#send-btn");
   const status = container.querySelector("#home-status");
-  sendBtn.addEventListener("click", () => {
+
+  function clearInputs() {
+    linkInput.value = "";
+    textInput.value = "";
+    captionInput.value = "";
+    instagramHint.hidden = true;
+    imageInput.value = "";
+    imagePreview.hidden = true;
+  }
+
+  sendBtn.addEventListener("click", async () => {
     const activeMode = container.querySelector(".mode-tab.active").dataset.mode;
     const hasInput =
       (activeMode === "link" && linkInput.value.trim()) ||
-      (activeMode === "text" && container.querySelector("#text-input").value.trim()) ||
+      (activeMode === "text" && textInput.value.trim()) ||
       (activeMode === "image" && imageInput.files?.[0]);
 
     if (!hasInput) {
@@ -91,7 +104,26 @@ export function renderHome(container) {
       return;
     }
 
-    // 실제 저장 + Gemini 호출 연결은 8번 작업에서 만든다.
-    status.textContent = "저장 · 변환 연결은 다음 작업에서 이어집니다.";
+    sendBtn.disabled = true;
+    try {
+      const recipe = await sendToConvert(
+        {
+          mode: activeMode,
+          link: linkInput.value,
+          caption: captionInput.value,
+          text: textInput.value,
+          imageFile: imageInput.files?.[0],
+        },
+        (text) => {
+          status.textContent = text;
+        }
+      );
+      status.textContent = `완료: ${recipe.title} (재료 ${recipe.ingredients.length}개, ${recipe.stepGroups.length}단계)`;
+      clearInputs();
+    } catch (err) {
+      status.textContent = err.message;
+    } finally {
+      sendBtn.disabled = false;
+    }
   });
 }
