@@ -5,3 +5,22 @@ export const TAB_ICONS = {
   shopping: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18l-1.5 10.2a2 2 0 0 1-2 1.8H6.5a2 2 0 0 1-2-1.8L3 9z"/><path d="M8 9 7 4"/><path d="M16 9l1-5"/><path d="M9 13v4"/><path d="M15 13v4"/></svg>`,
   settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>`,
 };
+
+// "해먹었어요" 평가용 꽃 아이콘. 꽃잎 5장을 원으로 둘러 그린, 직접 만든 단순 도형이다(참고 앱의 이미지 아님).
+export function flowerIcon(filled, size = 28) {
+  const petalFill = filled ? "#FFC94A" : "#ffffff";
+  const strokeColor = filled ? "#F2A900" : "#d8d8d8";
+  const centerFill = filled ? "#F2A900" : "#e6e6e6";
+  return `
+    <svg viewBox="0 0 24 24" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+      <g fill="${petalFill}" stroke="${strokeColor}" stroke-width="1.3">
+        <circle cx="12" cy="7" r="3.2" />
+        <circle cx="16.76" cy="10.45" r="3.2" />
+        <circle cx="14.94" cy="16.05" r="3.2" />
+        <circle cx="9.06" cy="16.05" r="3.2" />
+        <circle cx="7.24" cy="10.45" r="3.2" />
+      </g>
+      <circle cx="12" cy="12" r="2.4" fill="${centerFill}" />
+    </svg>
+  `;
+}

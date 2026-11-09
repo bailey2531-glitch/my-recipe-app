@@ -1,8 +1,9 @@
 // 레시피를 폰 안(IndexedDB)에 저장/조회/수정/삭제하는 함수 모음.
 // SPEC.md 3장 데이터 구조(Recipe)를 그대로 저장소 레벨에서 다룬다.
 const DB_NAME = "myrecipe";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_RECIPES = "recipes";
+const STORE_PHOTOS = "photos"; // "해먹었어요" 기록 사진(Blob)을 따로 저장한다
 
 let dbPromise = null;
 
@@ -19,6 +20,9 @@ function openDb() {
         const store = db.createObjectStore(STORE_RECIPES, { keyPath: "id" });
         // 같은 링크를 다시 넣었을 때 "이미 저장된 레시피예요"를 확인하기 위한 색인
         store.createIndex("by-url", "source.url");
+      }
+      if (!db.objectStoreNames.contains(STORE_PHOTOS)) {
+        db.createObjectStore(STORE_PHOTOS, { keyPath: "id" });
       }
     };
 
@@ -93,4 +97,20 @@ export function deleteRecipe(id) {
 // 원본 링크로 이미 저장된 레시피가 있는지 찾는다(중복 링크 안내용).
 export function findRecipeByUrl(url) {
   return runTransaction(STORE_RECIPES, "readonly", (store) => store.index("by-url").get(url));
+}
+
+// "해먹었어요" 기록 사진을 저장하고, 그 사진을 가리킬 id를 돌려준다.
+export async function savePhoto(blob) {
+  const id = makeId();
+  await runTransaction(STORE_PHOTOS, "readwrite", (store) => store.add({ id, blob }));
+  return id;
+}
+
+// id로 사진을 가져온다. { id, blob } 또는 undefined.
+export function getPhoto(id) {
+  return runTransaction(STORE_PHOTOS, "readonly", (store) => store.get(id));
+}
+
+export function deletePhoto(id) {
+  return runTransaction(STORE_PHOTOS, "readwrite", (store) => store.delete(id));
 }

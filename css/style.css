@@ -632,3 +632,119 @@ body {
   cursor: pointer;
   white-space: nowrap;
 }
+
+.action-row .btn-ghost.cooked {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.cook-card {
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.cook-card:last-child {
+  border-bottom: none;
+}
+
+.cook-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cook-card-flowers {
+  display: flex;
+  gap: 2px;
+}
+
+.cook-card-comment {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cook-card-photo {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-top: 8px;
+}
+
+.cook-card-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.cook-edit-btn,
+.cook-delete-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+}
+
+.bottom-sheet {
+  background: var(--color-bg);
+  width: 100%;
+  max-width: var(--max-width);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sheet-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.sheet-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.flower-rating {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.flower-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+}
+
+#cook-photo-remove {
+  width: 100%;
+  margin-top: 8px;
+}

@@ -1,9 +1,12 @@
-// 레시피 상세 화면. SPEC.md 2-5: 요약 카드, 원본 영역(유튜브 임베드), 재료, 도구, 조리 순서, 팁 박스.
-// 저장/해먹었어요/편집/공유/장바구니 담기 동작은 각자 담당 작업에서 연결한다.
-import { getRecipe } from "../db.js";
+// 레시피 상세 화면. SPEC.md 2-5·2-6: 요약 카드, 원본 영역(유튜브 임베드), 재료, 도구,
+// 조리 순서, 팁 박스, "해먹었어요" 기록. 저장/편집/공유/장바구니 담기는 각자 담당 작업에서 연결한다.
+import { getRecipe, getPhoto } from "../db.js";
 import { escapeHtml } from "../htmlUtil.js";
 import { PLATFORM_LABEL } from "../platformLabel.js";
 import { createYoutubePlayer, seekTo } from "../youtubePlayer.js";
+import { flowerIcon } from "../icons.js";
+import { resizeImage } from "../imageResize.js";
+import { addCookRecord, updateCookRecord, deleteCookRecord } from "../cookLog.js";
 
 function extractYoutubeVideoId(url) {
   try {
@@ -92,6 +95,147 @@ function sourceSectionHtml(recipe, youtubeVideoId) {
   `;
 }
 
+function formatCookDate(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function cookCardHtml(cook, photoUrl) {
+  const flowers = [1, 2, 3].map((n) => flowerIcon(n <= cook.rating, 18)).join("");
+  return `
+    <div class="cook-card" data-id="${cook.id}">
+      <div class="cook-card-header">
+        <div class="cook-card-flowers">${flowers}</div>
+        <span class="muted">${formatCookDate(cook.date)}</span>
+      </div>
+      ${cook.comment ? `<p class="cook-card-comment">${escapeHtml(cook.comment)}</p>` : ""}
+      ${photoUrl ? `<img src="${photoUrl}" class="cook-card-photo" alt="요리 사진" />` : ""}
+      <div class="cook-card-actions">
+        <button type="button" class="cook-edit-btn" data-id="${cook.id}">수정</button>
+        <button type="button" class="cook-delete-btn" data-id="${cook.id}">삭제</button>
+      </div>
+    </div>
+  `;
+}
+
+// "나의 요리 기록" 카드 목록(재료 위에 놓인다). 최신순으로 보여준다.
+function cookSectionHtml(cooks, photoUrls) {
+  if (!cooks.length) return "";
+  const sorted = [...cooks].sort((a, b) => b.date.localeCompare(a.date));
+  return `
+    <section class="card">
+      <h2>나의 요리 기록</h2>
+      ${sorted.map((c) => cookCardHtml(c, photoUrls.get(c.id))).join("")}
+    </section>
+  `;
+}
+
+// "해먹었어요" 바텀시트를 열고, 저장되면 onSaved()를 호출한다.
+// existing이 있으면 그 기록을 수정하는 모드로 연다.
+function openCookSheet({ recipeId, existing, existingPhotoUrl, onSaved }) {
+  const backdrop = document.createElement("div");
+  backdrop.className = "sheet-backdrop";
+  backdrop.innerHTML = `
+    <div class="bottom-sheet">
+      <div class="sheet-header">
+        <h2>이 레시피, 해먹어보니 어땠나요?</h2>
+        <button type="button" class="sheet-close" id="sheet-close-btn">✕</button>
+      </div>
+
+      <div class="flower-rating" id="flower-rating">
+        ${[1, 2, 3].map((n) => `<button type="button" class="flower-btn" data-value="${n}">${flowerIcon(false, 36)}</button>`).join("")}
+      </div>
+
+      <label class="field-label" for="cook-comment">나만의 코멘트</label>
+      <textarea id="cook-comment" class="text-input" rows="3" placeholder="어땠는지 적어보세요">${escapeHtml(existing?.comment || "")}</textarea>
+
+      <label class="field-label">사진 추가</label>
+      <input type="file" id="cook-photo-input" accept="image/*" />
+      <img id="cook-photo-preview" class="image-preview" ${existingPhotoUrl ? `src="${existingPhotoUrl}"` : "hidden"} />
+      <button type="button" class="btn-ghost" id="cook-photo-remove" ${existingPhotoUrl ? "" : "hidden"}>사진 빼기</button>
+
+      <button type="button" class="btn-primary" id="cook-save-btn" disabled>저장하기</button>
+      <p id="cook-sheet-status" class="muted" aria-live="polite"></p>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+
+  let rating = existing?.rating || 0;
+  let photoBlob = null; // 새로 고른 사진(리사이즈됨)
+  let removePhoto = false;
+
+  const flowerBtns = backdrop.querySelectorAll(".flower-btn");
+  const saveBtn = backdrop.querySelector("#cook-save-btn");
+  const statusEl = backdrop.querySelector("#cook-sheet-status");
+  const photoInput = backdrop.querySelector("#cook-photo-input");
+  const photoPreview = backdrop.querySelector("#cook-photo-preview");
+  const photoRemoveBtn = backdrop.querySelector("#cook-photo-remove");
+
+  function renderFlowers() {
+    flowerBtns.forEach((btn, i) => {
+      btn.innerHTML = flowerIcon(i < rating, 36);
+    });
+    saveBtn.disabled = rating < 1;
+  }
+  renderFlowers();
+
+  flowerBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      rating = Number(btn.dataset.value);
+      renderFlowers();
+    });
+  });
+
+  function close() {
+    backdrop.remove();
+  }
+
+  backdrop.addEventListener("click", (event) => {
+    if (event.target === backdrop) close();
+  });
+  backdrop.querySelector("#sheet-close-btn").addEventListener("click", close);
+
+  photoInput.addEventListener("change", async () => {
+    const file = photoInput.files?.[0];
+    if (!file) return;
+    try {
+      photoBlob = await resizeImage(file);
+      removePhoto = false;
+      photoPreview.src = URL.createObjectURL(photoBlob);
+      photoPreview.hidden = false;
+      photoRemoveBtn.hidden = false;
+    } catch (err) {
+      statusEl.textContent = err.message;
+    }
+  });
+
+  photoRemoveBtn.addEventListener("click", () => {
+    photoBlob = null;
+    removePhoto = true;
+    photoInput.value = "";
+    photoPreview.hidden = true;
+    photoRemoveBtn.hidden = true;
+  });
+
+  saveBtn.addEventListener("click", async () => {
+    saveBtn.disabled = true;
+    statusEl.textContent = "저장하는 중...";
+    try {
+      const comment = backdrop.querySelector("#cook-comment").value.trim();
+      if (existing) {
+        await updateCookRecord(recipeId, existing.id, { rating, comment, photoBlob, removePhoto });
+      } else {
+        await addCookRecord(recipeId, { rating, comment, photoBlob });
+      }
+      close();
+      onSaved();
+    } catch (err) {
+      statusEl.textContent = err.message;
+      saveBtn.disabled = false;
+    }
+  });
+}
+
 function notFoundHtml() {
   return `
     <div class="detail-header">
@@ -104,6 +248,13 @@ function notFoundHtml() {
 }
 
 export async function renderRecipeDetail(container, id) {
+  // container(#app)는 화면이 바뀔 때마다 재사용되므로, container에 직접 건
+  // 이벤트 리스너는 다시 그릴 때마다 지워야 한다(안 지우면 클릭할 때마다 중복 실행됨).
+  container._cleanupListeners?.();
+  const controller = new AbortController();
+  container._cleanupListeners = () => controller.abort();
+  const { signal } = controller;
+
   container.innerHTML = `<section class="card"><p class="muted">불러오는 중...</p></section>`;
 
   const recipe = id ? await getRecipe(id) : null;
@@ -120,6 +271,17 @@ export async function renderRecipeDetail(container, id) {
   const nutrition = recipe.nutrition;
   const isYoutube = recipe.source?.platform === "youtube";
   const youtubeVideoId = isYoutube ? extractYoutubeVideoId(recipe.source.url) : null;
+
+  const cooks = recipe.cooks || [];
+  const photoUrls = new Map();
+  for (const cook of cooks) {
+    if (!cook.photoBlobId) continue;
+    const photo = await getPhoto(cook.photoBlobId);
+    if (photo?.blob) photoUrls.set(cook.id, URL.createObjectURL(photo.blob));
+  }
+
+  const cookBtnLabel = cooks.length > 0 ? `✓ ${cooks.length}번 해먹었어요` : "해먹었어요";
+  const cookBtnClass = cooks.length > 0 ? "btn-ghost cooked" : "btn-ghost";
 
   container.innerHTML = `
     <div class="detail-header">
@@ -146,11 +308,13 @@ export async function renderRecipeDetail(container, id) {
 
       <div class="action-row">
         <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">저장</button>
-        <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">해먹었어요</button>
+        <button type="button" class="${cookBtnClass}" id="cook-btn">${cookBtnLabel}</button>
         <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">편집</button>
         <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">공유</button>
       </div>
     </section>
+
+    ${cookSectionHtml(cooks, photoUrls)}
 
     <section class="card">
       <h2>재료</h2>
@@ -201,11 +365,47 @@ export async function renderRecipeDetail(container, id) {
       player = p;
     });
 
-    container.addEventListener("click", (event) => {
-      const btn = event.target.closest(".timestamp-btn");
-      if (btn) {
-        seekTo(player, Number(btn.dataset.sec));
-      }
-    });
+    container.addEventListener(
+      "click",
+      (event) => {
+        const btn = event.target.closest(".timestamp-btn");
+        if (btn) {
+          seekTo(player, Number(btn.dataset.sec));
+        }
+      },
+      { signal }
+    );
   }
+
+  function refresh() {
+    renderRecipeDetail(container, id);
+  }
+
+  container.querySelector("#cook-btn").addEventListener("click", () => {
+    openCookSheet({ recipeId: id, onSaved: refresh });
+  });
+
+  container.addEventListener(
+    "click",
+    async (event) => {
+      const editBtn = event.target.closest(".cook-edit-btn");
+      const deleteBtn = event.target.closest(".cook-delete-btn");
+
+      if (editBtn) {
+        const cookId = editBtn.dataset.id;
+        const existing = cooks.find((c) => c.id === cookId);
+        if (!existing) return;
+        openCookSheet({ recipeId: id, existing, existingPhotoUrl: photoUrls.get(cookId), onSaved: refresh });
+      }
+
+      if (deleteBtn) {
+        const cookId = deleteBtn.dataset.id;
+        if (window.confirm("이 기록을 삭제할까요?")) {
+          await deleteCookRecord(id, cookId);
+          refresh();
+        }
+      }
+    },
+    { signal }
+  );
 }
