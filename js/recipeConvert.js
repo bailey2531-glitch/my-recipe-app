@@ -122,3 +122,27 @@ export async function sendToConvert(input, onStatus) {
     throw err;
   }
 }
+
+// 실패한 레시피를 다시 만든다. 원본 텍스트/캡션/이미지는 저장해 두지 않으므로
+// 링크(유튜브)가 있는 경우에만 다시 시도할 수 있다.
+export async function retryRecipe(recipe) {
+  if (recipe.source?.platform !== "youtube" || !recipe.source?.url) {
+    throw new Error("홈 화면에서 다시 보내 주세요(캡션·텍스트·이미지는 다시 입력이 필요해요).");
+  }
+
+  const apiKey = getGeminiKey();
+  if (!apiKey) {
+    throw new Error("설정 화면에서 Gemini API 키를 먼저 저장해 주세요.");
+  }
+
+  const source = { type: "youtube", url: recipe.source.url };
+
+  try {
+    const ai = await generateRecipeFromSource({ apiKey, source });
+    const fields = normalizeAiRecipe(ai);
+    return await updateRecipe(recipe.id, { status: "done", error: undefined, ...fields });
+  } catch (err) {
+    await updateRecipe(recipe.id, { status: "failed", error: err.message });
+    throw err;
+  }
+}

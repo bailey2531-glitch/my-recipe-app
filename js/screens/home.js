@@ -41,6 +41,8 @@ export function renderHome(container) {
       <button id="send-btn" type="button" class="btn-primary">보내기 ↑</button>
       <p id="home-status" class="muted" aria-live="polite"></p>
     </section>
+
+    <p class="see-all-link"><a href="#recipes">저장된 레시피 전체보기 →</a></p>
   `;
 
   const tabs = container.querySelectorAll(".mode-tab");

@@ -4,13 +4,17 @@ import { renderHome } from "./screens/home.js";
 import { renderBooks } from "./screens/books.js";
 import { renderShopping } from "./screens/shopping.js";
 import { renderSettings } from "./screens/settings.js";
+import { renderRecipes } from "./screens/recipes.js";
 import { TAB_ICONS } from "./icons.js";
 
+// tab: true인 항목만 하단 탭바에 나타난다. 저장된 레시피 목록(recipes)은
+// 하단 탭이 아니라 홈 화면의 "전체보기" 링크로 들어가는 화면이다.
 const ROUTES = {
-  home: { render: renderHome, label: "홈" },
-  books: { render: renderBooks, label: "레시피북" },
-  shopping: { render: renderShopping, label: "장보기" },
-  settings: { render: renderSettings, label: "설정" },
+  home: { render: renderHome, label: "홈", tab: true },
+  books: { render: renderBooks, label: "레시피북", tab: true },
+  shopping: { render: renderShopping, label: "장보기", tab: true },
+  settings: { render: renderSettings, label: "설정", tab: true },
+  recipes: { render: renderRecipes, label: "저장된 레시피" },
 };
 
 const DEFAULT_ROUTE = "home";
@@ -23,6 +27,7 @@ function currentRouteKey() {
 function buildTabBar() {
   const nav = document.getElementById("tab-bar");
   nav.innerHTML = Object.entries(ROUTES)
+    .filter(([, route]) => route.tab)
     .map(
       ([key, { label }]) => `
         <a class="tab-item" data-route="${key}" href="#${key}">
