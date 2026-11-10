@@ -106,8 +106,12 @@ export async function renderShopping(container) {
     ${items.length ? categoryGroupsHtml(items) : `<p class="muted">담은 재료가 없어요. 레시피 화면에서 재료를 담아보세요.</p>`}
   `;
 
+  // 체크·삭제 등으로 다시 그릴 때 보던 위치가 맨 위로 튀지 않게 스크롤을 되돌린다.
   function refresh() {
-    renderShopping(container);
+    const scrollY = window.scrollY;
+    renderShopping(container).then(() => {
+      window.scrollTo(0, scrollY);
+    });
   }
 
   const addManualBtn = container.querySelector("#add-manual-btn");

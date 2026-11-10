@@ -104,7 +104,11 @@ export async function renderBooks(container) {
     });
   }
 
+  // 북 만들기·이름변경·삭제 뒤에 다시 그릴 때 스크롤 위치를 유지한다.
   function refreshAll() {
-    renderBooks(container);
+    const scrollY = window.scrollY;
+    renderBooks(container).then(() => {
+      window.scrollTo(0, scrollY);
+    });
   }
 }

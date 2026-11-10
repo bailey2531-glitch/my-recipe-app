@@ -388,8 +388,13 @@ export async function renderRecipeDetail(container, id) {
     );
   }
 
+  // 재료 담기·해먹었어요 저장 등으로 화면을 다시 그릴 때, 보던 위치가
+  // 맨 위로 튀지 않도록 스크롤 위치를 기억했다가 되돌려 놓는다.
   function refresh() {
-    renderRecipeDetail(container, id);
+    const scrollY = window.scrollY;
+    renderRecipeDetail(container, id).then(() => {
+      window.scrollTo(0, scrollY);
+    });
   }
 
   container.querySelector("#cook-btn").addEventListener("click", () => {
