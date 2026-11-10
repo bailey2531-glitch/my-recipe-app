@@ -14,6 +14,11 @@
   box-sizing: border-box;
 }
 
+/* display:flex 등을 지정한 요소라도 hidden 속성이 있으면 항상 숨긴다 */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--color-bg-alt);

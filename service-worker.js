@@ -2,7 +2,7 @@
 // 레시피 같은 실제 데이터는 IndexedDB에 있어서 여기서 다루지 않는다.
 // 파일을 추가/삭제하거나 내용을 크게 바꿨으면 CACHE_NAME의 버전 숫자를 올린다.
 // 그래야 사용자 폰의 예전 캐시가 정리되고 새 파일로 바뀐다.
-const CACHE_NAME = "myrecipe-shell-v1";
+const CACHE_NAME = "myrecipe-shell-v2";
 
 const APP_SHELL = [
   "./",
