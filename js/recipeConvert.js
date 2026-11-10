@@ -80,10 +80,15 @@ export async function sendToConvert(input, onStatus) {
       source = { type: "youtube", url };
     } else if (platform === "instagram" || platform === "tiktok") {
       const caption = (input.caption || "").trim();
-      if (!caption) {
-        throw new Error("인스타·틱톡은 캡션을 함께 붙여넣어야 분석할 수 있어요.");
+      const captionImage = input.captionImageFile;
+      if (!caption && !captionImage) {
+        throw new Error("인스타·틱톡은 캡션 텍스트나 캡션 캡처 이미지 중 하나는 있어야 분석할 수 있어요.");
       }
       source = { type: "caption", text: caption };
+      if (captionImage) {
+        source.base64 = await fileToBase64(captionImage);
+        source.mimeType = captionImage.type;
+      }
     } else {
       throw new Error("지원하지 않는 링크예요. 레시피 글을 복사해서 '텍스트' 탭에 붙여넣어 주세요.");
     }

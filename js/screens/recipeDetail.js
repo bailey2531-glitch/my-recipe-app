@@ -10,6 +10,7 @@ import { addCookRecord, updateCookRecord, deleteCookRecord } from "../cookLog.js
 import { shareRecipeLink } from "../shareLink.js";
 import { addIngredientToCart, addAllIngredientsToCart, getCartedIngredientNames, getCartCount } from "../shoppingCart.js";
 import { extractYoutubeVideoId } from "../youtubeUrl.js";
+import { extractInstagramEmbedUrl } from "../instagramUrl.js";
 import { openBookPicker } from "../bookPicker.js";
 
 function formatTimestamp(totalSeconds) {
@@ -74,6 +75,13 @@ function sourceSectionHtml(recipe, youtubeVideoId) {
 
   if (platform === "youtube" && youtubeVideoId) {
     return `<div class="yt-embed-wrap"><div id="yt-player"></div></div>`;
+  }
+
+  if (platform === "instagram" && url) {
+    const embedUrl = extractInstagramEmbedUrl(url);
+    if (embedUrl) {
+      return `<div class="ig-embed-wrap"><iframe src="${escapeHtml(embedUrl)}" loading="lazy" frameborder="0" allowtransparency="true"></iframe></div>`;
+    }
   }
 
   if (!url) return "";

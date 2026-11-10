@@ -25,8 +25,11 @@ export function renderHome(container) {
       <div id="mode-panel-link" class="input-mode-panel">
         <input id="link-input" class="text-input" type="url" placeholder="유튜브·인스타 링크를 붙여넣으세요" />
         <div id="instagram-hint" hidden>
-          <p class="muted">인스타는 자동 분석이 어려울 수 있어요. 캡션을 함께 붙여넣으면 더 정확해요.</p>
+          <p class="muted">인스타는 자동 분석이 어려울 수 있어요. 캡션을 글자로 붙여넣거나, 캡션을 캡처한 사진을 올려주면 더 정확해요(둘 다 넣어도 좋아요).</p>
           <textarea id="caption-input" class="text-input" rows="4" placeholder="캡션(설명글)을 붙여넣으세요"></textarea>
+          <label class="field-label" for="caption-image-input">캡션 캡처 이미지(선택)</label>
+          <input id="caption-image-input" type="file" accept="image/*" />
+          <img id="caption-image-preview" class="image-preview" hidden alt="캡션 캡처 미리보기" />
         </div>
       </div>
 
@@ -81,6 +84,18 @@ export function renderHome(container) {
     imagePreview.hidden = false;
   });
 
+  const captionImageInput = container.querySelector("#caption-image-input");
+  const captionImagePreview = container.querySelector("#caption-image-preview");
+  captionImageInput.addEventListener("change", () => {
+    const file = captionImageInput.files?.[0];
+    if (!file) {
+      captionImagePreview.hidden = true;
+      return;
+    }
+    captionImagePreview.src = URL.createObjectURL(file);
+    captionImagePreview.hidden = false;
+  });
+
   const textInput = container.querySelector("#text-input");
   const captionInput = container.querySelector("#caption-input");
   const sendBtn = container.querySelector("#send-btn");
@@ -93,6 +108,8 @@ export function renderHome(container) {
     instagramHint.hidden = true;
     imageInput.value = "";
     imagePreview.hidden = true;
+    captionImageInput.value = "";
+    captionImagePreview.hidden = true;
   }
 
   // 유튜브·인스타 앱의 "공유"에서 이 앱으로 들어온 경우, 링크를 자동으로 채운다.
@@ -127,6 +144,7 @@ export function renderHome(container) {
           mode: activeMode,
           link: linkInput.value,
           caption: captionInput.value,
+          captionImageFile: captionImageInput.files?.[0],
           text: textInput.value,
           imageFile: imageInput.files?.[0],
         },

@@ -638,6 +638,22 @@ body {
   height: 100%;
 }
 
+.ig-embed-wrap {
+  width: 100%;
+  min-height: 650px;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: var(--color-bg-alt);
+}
+
+.ig-embed-wrap iframe {
+  width: 100%;
+  height: 650px;
+  border: none;
+  display: block;
+}
+
 .source-fallback {
   margin-bottom: 12px;
 }

@@ -89,12 +89,19 @@ function buildParts(source) {
         { fileData: { fileUri: source.url } },
         { text: `${instructions}\n\n위 유튜브 요리 영상을 분석해서 레시피 JSON으로 만들어줘.` },
       ];
-    case "caption":
-      return [
-        {
-          text: `${instructions}\n\n아래는 인스타그램/틱톡 게시물의 캡션(설명글)이야. 이 캡션만 근거로 레시피 JSON을 만들어줘. 캡션에 없는 내용은 지어내지 말고 비워둬.\n\n---\n${source.text}`,
-        },
-      ];
+    case "caption": {
+      const hasImage = Boolean(source.base64);
+      const hasText = Boolean(source.text);
+      const captionDesc = hasImage && hasText ? "캡션(설명글)과 캡션을 캡처한 사진" : hasImage ? "캡션을 캡처한 사진" : "캡션(설명글)";
+      const parts = [];
+      if (hasImage) {
+        parts.push({ inlineData: { mimeType: source.mimeType, data: source.base64 } });
+      }
+      parts.push({
+        text: `${instructions}\n\n아래는 인스타그램/틱톡 게시물의 ${captionDesc}이야. 이 내용만 근거로 레시피 JSON을 만들어줘. 여기 없는 내용은 지어내지 말고 비워둬.${hasText ? `\n\n---\n${source.text}` : ""}`,
+      });
+      return parts;
+    }
     case "text":
       return [{ text: `${instructions}\n\n아래 글을 분석해서 레시피 JSON으로 만들어줘.\n\n---\n${source.text}` }];
     case "image":
