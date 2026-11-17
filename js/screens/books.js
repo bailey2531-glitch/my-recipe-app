@@ -1,8 +1,10 @@
-// 레시피북 화면. SPEC.md 2-9: 목록, 콜라주 표지, 검색, 새 레시피북 만들기/이름변경/삭제.
+// 레시피북 화면. SPEC.md 2-9: 목록, 콜라주 표지, 재료 검색, 새 레시피북 만들기/이름변경/삭제.
 import { getAllRecipes } from "../db.js";
 import { getAllBooks, createBook, renameBook, removeBook, getRecipesForBook, DEFAULT_BOOK_ID, DEFAULT_BOOK_NAME } from "../bookService.js";
 import { getRecipeThumbnail } from "../recipeThumbnail.js";
 import { escapeHtml } from "../htmlUtil.js";
+import { PLATFORM_LABEL } from "../platformLabel.js";
+import { searchIcon } from "../icons.js";
 
 function collageHtml(recipes) {
   const thumbs = recipes.slice(0, 4).map((r) => getRecipeThumbnail(r));
@@ -36,6 +38,32 @@ function bookCardHtml(book, recipes) {
   `;
 }
 
+// 검색어가 들어간 재료를 가진 레시피만 골라, 눌렀을 때 그 레시피로 바로 가는 목록을 만든다.
+function ingredientMatchesHtml(allRecipes, query) {
+  const matches = allRecipes.filter((r) => (r.ingredients || []).some((ing) => ing.name.toLowerCase().includes(query)));
+
+  if (!matches.length) {
+    return `<p class="muted">"${escapeHtml(query)}"가 들어간 레시피가 없어요.</p>`;
+  }
+
+  return `
+    <ul class="ingredient-match-list">
+      ${matches
+        .map(
+          (r) => `
+        <li>
+          <a href="#recipe/${r.id}" class="ingredient-match-row">
+            <span class="ingredient-match-title">${escapeHtml(r.title)}</span>
+            <span class="muted small">${PLATFORM_LABEL[r.source?.platform] || ""}</span>
+          </a>
+        </li>
+      `
+        )
+        .join("")}
+    </ul>
+  `;
+}
+
 export async function renderBooks(container) {
   container.innerHTML = `<section class="card"><p class="muted">불러오는 중...</p></section>`;
 
@@ -48,46 +76,42 @@ export async function renderBooks(container) {
     recipesByBook.set(book.id, await getRecipesForBook(book.id));
   }
 
-  render("");
+  container.innerHTML = `
+    <h1>내 레시피북</h1>
 
-  // focusSearch가 true일 때만 검색칸에 포커스를 되돌린다(검색창에 타이핑하면
-  // 한 글자마다 화면을 다시 그리기 때문에, 그 경우에만 포커스를 유지해야 한다).
-  // 화면에 처음 들어왔을 때는 포커스를 주지 않아서 키보드가 바로 뜨지 않게 한다.
-  function render(searchText, { focusSearch } = {}) {
+    <div class="search-row">
+      <span class="search-icon" aria-hidden="true">${searchIcon}</span>
+      <input id="book-search" class="text-input search-input" type="search" placeholder="재료 이름으로 검색" />
+    </div>
+
+    <div class="book-new-row">
+      <input type="text" id="book-new-name" class="text-input" placeholder="새 레시피북 이름" />
+      <button type="button" class="btn-icon-round" id="book-new-btn" aria-label="새 레시피북 만들기">+</button>
+    </div>
+
+    <div id="book-results"></div>
+  `;
+
+  // 검색칸에 타이핑할 때는 결과 부분(#book-results)만 바꾸고, 검색칸(input) 자체는
+  // 다시 그리지 않는다. input을 통째로 다시 그리면 한글 입력 중(조합 중) 글자가
+  // 자모로 쪼개져 나오는 문제가 있어서, 입력칸은 그대로 두고 결과만 갈아끼운다.
+  const searchInput = container.querySelector("#book-search");
+  const resultsEl = container.querySelector("#book-results");
+
+  function renderResults(searchText) {
     const query = searchText.trim().toLowerCase();
-    const visibleBooks = query ? booksWithDefault.filter((b) => b.name.toLowerCase().includes(query)) : booksWithDefault;
 
-    container.innerHTML = `
-      <h1>내 레시피북</h1>
-      <input id="book-search" class="text-input" type="search" placeholder="레시피북 이름으로 검색" value="${escapeHtml(searchText)}" />
-
-      <div class="book-new-row">
-        <input type="text" id="book-new-name" class="text-input" placeholder="새 레시피북 이름" />
-        <button type="button" class="btn-primary" id="book-new-btn">+ 새 레시피 북</button>
-      </div>
-
-      <div class="book-grid">
-        ${visibleBooks.map((b) => bookCardHtml(b, recipesByBook.get(b.id) || [])).join("")}
-      </div>
-      ${visibleBooks.length === 0 ? `<p class="muted">"${escapeHtml(searchText)}"와(과) 일치하는 레시피북이 없어요.</p>` : ""}
-    `;
-
-    const searchInput = container.querySelector("#book-search");
-    searchInput.addEventListener("input", () => render(searchInput.value, { focusSearch: true }));
-    if (focusSearch) {
-      searchInput.focus();
-      searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    if (!query) {
+      resultsEl.innerHTML = `<div class="book-grid">${booksWithDefault.map((b) => bookCardHtml(b, recipesByBook.get(b.id) || [])).join("")}</div>`;
+      wireBookCardButtons();
+      return;
     }
 
-    container.querySelector("#book-new-btn").addEventListener("click", async () => {
-      const nameInput = container.querySelector("#book-new-name");
-      const name = nameInput.value.trim();
-      if (!name) return;
-      await createBook(name);
-      refreshAll();
-    });
+    resultsEl.innerHTML = ingredientMatchesHtml(allRecipes, query);
+  }
 
-    container.querySelectorAll(".book-rename-btn").forEach((btn) => {
+  function wireBookCardButtons() {
+    resultsEl.querySelectorAll(".book-rename-btn").forEach((btn) => {
       btn.addEventListener("click", async (event) => {
         event.preventDefault();
         const current = booksWithDefault.find((b) => b.id === btn.dataset.id);
@@ -98,7 +122,7 @@ export async function renderBooks(container) {
       });
     });
 
-    container.querySelectorAll(".book-delete-btn").forEach((btn) => {
+    resultsEl.querySelectorAll(".book-delete-btn").forEach((btn) => {
       btn.addEventListener("click", async (event) => {
         event.preventDefault();
         if (window.confirm("이 레시피북을 삭제할까요? (안에 있던 레시피는 지워지지 않아요)")) {
@@ -108,6 +132,17 @@ export async function renderBooks(container) {
       });
     });
   }
+
+  searchInput.addEventListener("input", () => renderResults(searchInput.value));
+  renderResults("");
+
+  container.querySelector("#book-new-btn").addEventListener("click", async () => {
+    const nameInput = container.querySelector("#book-new-name");
+    const name = nameInput.value.trim();
+    if (!name) return;
+    await createBook(name);
+    refreshAll();
+  });
 
   // 북 만들기·이름변경·삭제 뒤에 다시 그릴 때 스크롤 위치를 유지한다.
   function refreshAll() {
