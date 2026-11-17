@@ -818,6 +818,21 @@ body {
   font-weight: 600;
 }
 
+.cook-cancel-row {
+  text-align: right;
+  margin: 8px 0 0;
+}
+
+.cook-cancel-btn {
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  text-decoration: underline;
+  font-size: 12px;
+  padding: 0;
+  cursor: pointer;
+}
+
 .cook-card {
   padding: 12px 0;
   border-bottom: 1px solid var(--color-divider);
@@ -961,15 +976,8 @@ body {
   padding: 8px;
 }
 
-.carted-recipe-thumb {
-  width: 100%;
-  height: 70px;
-  border-radius: 8px;
-  background: #e4e4e4;
-}
-
 .carted-recipe-title {
-  margin: 6px 0 0;
+  margin: 0 22px 0 0; /* 오른쪽 위 ✕ 버튼과 안 겹치게 */
   font-size: 13px;
   font-weight: 600;
   overflow: hidden;
@@ -1050,6 +1058,29 @@ body {
 
 .shopping-item-name {
   font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+
+button.shopping-item-name {
+  cursor: pointer;
+}
+
+.shopping-item-recipes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.shopping-item-recipe-link {
+  font-size: 12px;
+  color: var(--color-accent);
+  text-decoration: none;
 }
 
 .shopping-item-body.checked .shopping-item-name,

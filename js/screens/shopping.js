@@ -13,7 +13,6 @@ import { INGREDIENT_CATEGORIES } from "../ingredientCategories.js";
 function cartedRecipeCardHtml(recipeId, fallbackTitle, recipe) {
   return `
     <div class="carted-recipe-card">
-      <div class="carted-recipe-thumb"></div>
       <div class="carted-recipe-info">
         <p class="carted-recipe-title">${escapeHtml(recipe?.title || fallbackTitle)}</p>
         ${recipe?.servings ? `<p class="muted small">${recipe.servings}인분</p>` : ""}
@@ -23,18 +22,35 @@ function cartedRecipeCardHtml(recipeId, fallbackTitle, recipe) {
   `;
 }
 
+// 같은 재료를 여러 레시피에서 담았으면, 레시피별로 하나씩(중복 없이) 이름을 돌려준다.
+function uniqueRecipeSources(sources) {
+  const map = new Map();
+  for (const s of sources) {
+    if (s.recipeId && s.recipeTitle) map.set(s.recipeId, s.recipeTitle);
+  }
+  return [...map.entries()];
+}
+
 function itemRowHtml(item) {
   const amountText = summarizeAmounts(item.sources);
-  const recipeNames = [...new Set(item.sources.filter((s) => s.recipeTitle).map((s) => s.recipeTitle))];
+  const recipeSources = uniqueRecipeSources(item.sources);
+  const recipeLinksHtml = recipeSources
+    .map(([recipeId, title]) => `<a href="#recipe/${recipeId}" class="shopping-item-recipe-link">${escapeHtml(title)}</a>`)
+    .join("");
+
   return `
     <li class="shopping-item-row">
       <input type="checkbox" class="shopping-checkbox" data-id="${item.id}" ${item.checked ? "checked" : ""} />
       <div class="shopping-item-body ${item.checked ? "checked" : ""}">
         <div class="shopping-item-main">
-          <span class="shopping-item-name">${escapeHtml(item.name)}</span>
+          ${
+            recipeLinksHtml
+              ? `<button type="button" class="shopping-item-name">${escapeHtml(item.name)}</button>`
+              : `<span class="shopping-item-name">${escapeHtml(item.name)}</span>`
+          }
           <span class="muted">${escapeHtml(amountText)}</span>
         </div>
-        ${recipeNames.length ? `<p class="muted small">${recipeNames.map(escapeHtml).join(", ")}</p>` : ""}
+        ${recipeLinksHtml ? `<div class="shopping-item-recipes" hidden>${recipeLinksHtml}</div>` : ""}
       </div>
     </li>
   `;
@@ -142,6 +158,14 @@ export async function renderShopping(container) {
         await removeRecipeFromCart(btn.dataset.recipeId);
         refresh();
       }
+    });
+  });
+
+  // 재료 이름을 누르면, 어느 레시피에서 담은 재료인지 아래에 펼쳐서 보여준다.
+  container.querySelectorAll(".shopping-item-name").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const recipesEl = btn.closest(".shopping-item-body")?.querySelector(".shopping-item-recipes");
+      if (recipesEl) recipesEl.hidden = !recipesEl.hidden;
     });
   });
 
