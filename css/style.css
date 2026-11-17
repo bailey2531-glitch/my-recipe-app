@@ -136,47 +136,135 @@ body {
   padding: 16px;
 }
 
-.platform-row {
-  display: flex;
-  gap: 8px;
-  margin: 16px 0;
-  flex-wrap: wrap;
+/* 홈 화면 입력창(컴포저): 플랫폼 아이콘 줄 + 입력칸 + 동그란 아이콘 버튼 줄 */
+.composer {
+  background: var(--color-bg-alt);
+  border-radius: var(--radius-card);
+  padding: 14px;
+  margin-top: 14px;
 }
 
-.platform-badge {
-  background: var(--color-bg-alt);
-  border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 13px;
+.composer-platforms {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 12px;
   color: var(--color-text-muted);
 }
 
-.input-mode-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+.composer-platform-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
 }
 
-.mode-tab {
-  flex: 1;
-  padding: 10px 0;
+.composer-platform-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.composer-icon-btn {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 999px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
   background: var(--color-bg);
   color: var(--color-text-muted);
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
-.mode-tab.active {
-  background: var(--color-accent-light);
-  color: var(--color-accent);
-  border-color: var(--color-accent-light);
-  font-weight: 600;
+.composer-icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.composer-icon-btn.active {
+  background: var(--color-text);
+  border-color: var(--color-text);
+  color: #fff;
+}
+
+.composer-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.composer-send-btn {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  margin-left: auto;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.composer-send-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.composer-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .input-mode-panel {
   margin-bottom: 8px;
+}
+
+/* 링크/텍스트/이미지 중 어느 탭이든 입력칸 자리 높이를 고정해서,
+   탭을 바꿀 때마다 컴포저 상자 크기가 늘었다 줄었다 하지 않게 한다. */
+.composer-input-area {
+  min-height: 96px;
+}
+
+.composer-textarea {
+  width: 100%;
+  height: 72px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  resize: none;
+}
+
+.shopping-preview-card {
+  margin-top: 16px;
+}
+
+.shopping-preview-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.shopping-preview-header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.shopping-preview-header a {
+  font-size: 13px;
+  color: var(--color-accent);
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .text-input {
@@ -203,7 +291,7 @@ body {
 
 .see-all-link {
   text-align: right;
-  margin: 12px 4px 0;
+  margin: 4px 4px 0;
 }
 
 .see-all-link a {

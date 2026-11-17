@@ -1,67 +1,90 @@
-// 홈 화면. 입력 카드(링크/텍스트/이미지) + "보내기" → 변환 흐름 + 공유받기 자동 채움.
+// 홈 화면. 입력 카드(링크/텍스트/이미지) + "보내기" → 변환 흐름 + 공유받기 자동 채움 + 이번주 장보기 미리보기.
 import { sendToConvert } from "../recipeConvert.js";
 import { readShareParams, extractSharedUrl, clearShareParams } from "../shareTarget.js";
+import { SOURCE_ICONS } from "../icons.js";
+import { getAllShoppingItems } from "../db.js";
 
 const INSTAGRAM_TIKTOK_PATTERN = /instagram\.com|tiktok\.com/i;
+
+// "담은 재료: 계란, 대파, 두부 외 2개" 처럼 장보기 목록을 짧게 요약한다.
+function summarizeShoppingPreview(items) {
+  if (items.length === 0) return "아직 담은 재료가 없어요.";
+  const names = items.map((item) => item.name);
+  const shown = names.slice(0, 4).join(", ");
+  const rest = names.length - 4;
+  return `담은 재료: ${shown}${rest > 0 ? ` 외 ${rest}개` : ""}`;
+}
 
 export function renderHome(container) {
   container.innerHTML = `
     <section class="card">
-      <h1>오늘 본 요리 영상, 레시피로 남겨 두세요</h1>
+      <h1>오늘 본 요리 영상,<br/>레시피로 남겨 두세요</h1>
 
-      <div class="platform-row">
-        <span class="platform-badge">▶️ 유튜브</span>
-        <span class="platform-badge">📸 인스타</span>
-        <span class="platform-badge">🎵 틱톡</span>
-        <span class="platform-badge">🔗 웹</span>
-      </div>
+      <div class="composer">
+        <div class="composer-platforms" aria-hidden="true">
+          <span class="composer-platform-icon">${SOURCE_ICONS.youtube}</span>
+          <span class="composer-platform-icon">${SOURCE_ICONS.instagram}</span>
+          <span class="composer-platform-icon">${SOURCE_ICONS.tiktok}</span>
+          <span class="composer-platform-icon">${SOURCE_ICONS.web}</span>
+        </div>
 
-      <div class="input-mode-tabs">
-        <button type="button" class="mode-tab active" data-mode="link">링크</button>
-        <button type="button" class="mode-tab" data-mode="text">텍스트</button>
-        <button type="button" class="mode-tab" data-mode="image">이미지</button>
-      </div>
+        <div class="composer-input-area">
+          <div id="mode-panel-link" class="input-mode-panel">
+            <input id="link-input" class="text-input" type="url" placeholder="링크를 넣어 주세요" />
+            <div id="instagram-hint" hidden>
+              <p class="muted">인스타는 자동 분석이 어려울 수 있어요. 캡션을 글자로 붙여넣거나, 캡션을 캡처한 사진을 올려주면 더 정확해요(둘 다 넣어도 좋아요).</p>
+              <textarea id="caption-input" class="text-input" rows="4" placeholder="캡션(설명글)을 붙여넣으세요"></textarea>
+              <label class="field-label" for="caption-image-input">캡션 캡처 이미지(선택)</label>
+              <input id="caption-image-input" type="file" accept="image/*" />
+              <img id="caption-image-preview" class="image-preview" hidden alt="캡션 캡처 미리보기" />
+            </div>
+          </div>
 
-      <div id="mode-panel-link" class="input-mode-panel">
-        <input id="link-input" class="text-input" type="url" placeholder="유튜브·인스타 링크를 붙여넣으세요" />
-        <div id="instagram-hint" hidden>
-          <p class="muted">인스타는 자동 분석이 어려울 수 있어요. 캡션을 글자로 붙여넣거나, 캡션을 캡처한 사진을 올려주면 더 정확해요(둘 다 넣어도 좋아요).</p>
-          <textarea id="caption-input" class="text-input" rows="4" placeholder="캡션(설명글)을 붙여넣으세요"></textarea>
-          <label class="field-label" for="caption-image-input">캡션 캡처 이미지(선택)</label>
-          <input id="caption-image-input" type="file" accept="image/*" />
-          <img id="caption-image-preview" class="image-preview" hidden alt="캡션 캡처 미리보기" />
+          <div id="mode-panel-text" class="input-mode-panel" hidden>
+            <textarea id="text-input" class="text-input composer-textarea" placeholder="레시피 글이나 캡션을 붙여넣으세요"></textarea>
+          </div>
+
+          <div id="mode-panel-image" class="input-mode-panel" hidden>
+            <input id="image-input" type="file" accept="image/*" />
+            <img id="image-preview" class="image-preview" hidden alt="선택한 이미지 미리보기" />
+          </div>
+        </div>
+
+        <div class="composer-actions">
+          <button type="button" class="composer-icon-btn active" data-mode="link" aria-label="링크로 입력">${SOURCE_ICONS.link}</button>
+          <button type="button" class="composer-icon-btn" data-mode="text" aria-label="텍스트로 입력">${SOURCE_ICONS.text}</button>
+          <button type="button" class="composer-icon-btn" data-mode="image" aria-label="이미지로 입력">${SOURCE_ICONS.image}</button>
+          <button type="button" class="composer-icon-btn" id="mic-btn" aria-label="음성으로 입력(준비 중)" title="음성 입력은 아직 준비 중이에요" disabled>${SOURCE_ICONS.mic}</button>
+          <button type="button" class="composer-send-btn" id="send-btn" aria-label="보내기">${SOURCE_ICONS.send}</button>
         </div>
       </div>
-
-      <div id="mode-panel-text" class="input-mode-panel" hidden>
-        <textarea id="text-input" class="text-input" rows="6" placeholder="레시피 글이나 캡션을 붙여넣으세요"></textarea>
-      </div>
-
-      <div id="mode-panel-image" class="input-mode-panel" hidden>
-        <input id="image-input" type="file" accept="image/*" />
-        <img id="image-preview" class="image-preview" hidden alt="선택한 이미지 미리보기" />
-      </div>
-
-      <button id="send-btn" type="button" class="btn-primary">보내기 ↑</button>
       <p id="home-status" class="muted" aria-live="polite"></p>
     </section>
 
     <p class="see-all-link"><a href="#recipes">저장된 레시피 전체보기 →</a></p>
+
+    <section class="card shopping-preview-card">
+      <div class="shopping-preview-header">
+        <h2>이번주 장보기</h2>
+        <a href="#shopping">장보기 목록 →</a>
+      </div>
+      <p id="shopping-preview-text" class="muted">불러오는 중...</p>
+    </section>
   `;
 
-  const tabs = container.querySelectorAll(".mode-tab");
+  const modeButtons = container.querySelectorAll(".composer-icon-btn[data-mode]");
   const panels = {
     link: container.querySelector("#mode-panel-link"),
     text: container.querySelector("#mode-panel-text"),
     image: container.querySelector("#mode-panel-image"),
   };
 
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      tabs.forEach((t) => t.classList.remove("active"));
-      tab.classList.add("active");
+  modeButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      modeButtons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
       Object.entries(panels).forEach(([mode, panel]) => {
-        panel.hidden = mode !== tab.dataset.mode;
+        panel.hidden = mode !== btn.dataset.mode;
       });
     });
   });
@@ -126,7 +149,7 @@ export function renderHome(container) {
   }
 
   sendBtn.addEventListener("click", async () => {
-    const activeMode = container.querySelector(".mode-tab.active").dataset.mode;
+    const activeMode = container.querySelector(".composer-icon-btn.active").dataset.mode;
     const hasInput =
       (activeMode === "link" && linkInput.value.trim()) ||
       (activeMode === "text" && textInput.value.trim()) ||
@@ -159,5 +182,9 @@ export function renderHome(container) {
     } finally {
       sendBtn.disabled = false;
     }
+  });
+
+  getAllShoppingItems().then((items) => {
+    container.querySelector("#shopping-preview-text").textContent = summarizeShoppingPreview(items);
   });
 }
