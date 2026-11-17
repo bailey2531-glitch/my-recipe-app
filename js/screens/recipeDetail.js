@@ -281,8 +281,6 @@ export async function renderRecipeDetail(container, id) {
 
   const cookBtnLabel = cooks.length > 0 ? `✓ ${cooks.length}번 해먹었어요` : "해먹었어요";
   const cookBtnClass = cooks.length > 0 ? "btn-ghost cooked" : "btn-ghost";
-  // "해먹었어요"를 잘못 눌렀을 때 바로 취소할 수 있게, 가장 최근 기록을 기억해둔다.
-  const latestCook = cooks.length ? [...cooks].sort((a, b) => b.date.localeCompare(a.date))[0] : null;
 
   const cartedNames = await getCartedIngredientNames(id);
   const cartCount = await getCartCount();
@@ -325,7 +323,6 @@ export async function renderRecipeDetail(container, id) {
             : `<button type="button" class="btn-ghost" disabled title="원본 링크가 없는 레시피예요">공유</button>`
         }
       </div>
-      ${latestCook ? `<p class="cook-cancel-row"><button type="button" class="cook-cancel-btn" id="cook-cancel-btn">가장 최근 기록 취소</button></p>` : ""}
     </section>
 
     ${cookSectionHtml(cooks, photoUrls)}
@@ -410,13 +407,6 @@ export async function renderRecipeDetail(container, id) {
 
   container.querySelector("#cook-btn").addEventListener("click", () => {
     openCookSheet({ recipeId: id, onSaved: refresh });
-  });
-
-  container.querySelector("#cook-cancel-btn")?.addEventListener("click", async () => {
-    if (window.confirm("가장 최근 '해먹었어요' 기록을 취소할까요?")) {
-      await deleteCookRecord(id, latestCook.id);
-      refresh();
-    }
   });
 
   container.querySelector("#save-btn").addEventListener("click", () => {

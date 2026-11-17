@@ -338,13 +338,13 @@ body {
 }
 
 .sort-select {
-  max-width: 100px;
+  max-width: 74px;
   overflow: hidden;
   text-overflow: ellipsis;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 6px 8px;
-  font-size: 14px;
+  padding: 6px 4px;
+  font-size: 13px;
   background: var(--color-bg);
   color: var(--color-text);
   flex-shrink: 0;
@@ -816,21 +816,6 @@ body {
   background: var(--color-accent-light);
   color: var(--color-accent);
   font-weight: 600;
-}
-
-.cook-cancel-row {
-  text-align: right;
-  margin: 8px 0 0;
-}
-
-.cook-cancel-btn {
-  background: none;
-  border: none;
-  color: var(--color-danger);
-  text-decoration: underline;
-  font-size: 12px;
-  padding: 0;
-  cursor: pointer;
 }
 
 .cook-card {

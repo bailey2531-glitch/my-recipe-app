@@ -35,7 +35,7 @@ function itemRowHtml(item) {
   const amountText = summarizeAmounts(item.sources);
   const recipeSources = uniqueRecipeSources(item.sources);
   const recipeLinksHtml = recipeSources
-    .map(([recipeId, title]) => `<a href="#recipe/${recipeId}" class="shopping-item-recipe-link">${escapeHtml(title)}</a>`)
+    .map(([recipeId, title]) => `<a href="#recipe/${recipeId}" class="shopping-item-recipe-link">↳ ${escapeHtml(title)}</a>`)
     .join("");
 
   return `
