@@ -249,22 +249,18 @@ body {
   margin-top: 16px;
 }
 
-.shopping-preview-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.shopping-preview-header h2 {
+.shopping-preview-card h2 {
   margin: 0;
   font-size: 16px;
 }
 
-.shopping-preview-header a {
+.shopping-preview-link {
+  display: block;
+  text-align: right;
+  margin-top: 10px;
   font-size: 13px;
   color: var(--color-accent);
   text-decoration: none;
-  white-space: nowrap;
 }
 
 .text-input {

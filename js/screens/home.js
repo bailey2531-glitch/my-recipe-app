@@ -64,11 +64,9 @@ export function renderHome(container) {
     <p class="see-all-link"><a href="#recipes">저장된 레시피 전체보기 →</a></p>
 
     <section class="card shopping-preview-card">
-      <div class="shopping-preview-header">
-        <h2>이번주 장보기</h2>
-        <a href="#shopping">장보기 목록 →</a>
-      </div>
+      <h2>이번주 장보기</h2>
       <p id="shopping-preview-text" class="muted">불러오는 중...</p>
+      <a href="#shopping" class="shopping-preview-link">장보기 목록 →</a>
     </section>
   `;
 
