@@ -11,17 +11,34 @@ export async function callGeminiJson({ apiKey, prompt, parts, responseSchema }) 
   const url = `${API_BASE}/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const contentParts = parts || [{ text: prompt }];
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: contentParts }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema,
-      },
-    }),
-  });
+  // 네트워크가 끊기거나 응답이 멈추면 "생성 대기 중"에서 영원히 안 움직이니,
+  // 60초가 지나면 실패로 처리해서 사용자가 다시 시도할 수 있게 한다.
+  const timeoutMs = 60000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: contentParts }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema,
+        },
+      }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error("응답이 너무 오래 걸려서 중단했어요(60초). 네트워크 상태를 확인하고 다시 시도해 주세요.");
+    }
+    throw new Error("네트워크 요청에 실패했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.");
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const body = await res.json().catch(() => null);
 

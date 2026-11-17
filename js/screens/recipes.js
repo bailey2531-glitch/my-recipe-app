@@ -99,6 +99,12 @@ export async function renderRecipes(container, bookId) {
 
   const state = { activeChips: new Set() };
 
+  // 이 화면을 보고 있는 동안 몇 초마다 자동으로 다시 불러온다.
+  // (AI가 백그라운드에서 레시피를 만드는 동안 이 화면을 계속 보고 있어도
+  //  "생성 대기 중"이 완료/실패로 바뀌는 걸 수동으로 새로고침하지 않아도 바로 보여주기 위함)
+  const pollTimer = setInterval(refresh, 3000);
+  window.addEventListener("hashchange", () => clearInterval(pollTimer), { once: true });
+
   async function refresh() {
     const all = bookId ? await getRecipesForBook(bookId) : await getAllRecipes();
     const searchText = searchInput.value.trim().toLowerCase();
