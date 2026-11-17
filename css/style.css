@@ -945,44 +945,6 @@ body {
   white-space: nowrap;
 }
 
-.carted-recipe-row {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.carted-recipe-card {
-  flex: 0 0 auto;
-  width: 140px;
-  position: relative;
-  background: var(--color-bg-alt);
-  border-radius: var(--radius-card);
-  padding: 8px;
-}
-
-.carted-recipe-title {
-  margin: 0 22px 0 0; /* 오른쪽 위 ✕ 버튼과 안 겹치게 */
-  font-size: 13px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.carted-recipe-remove {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  border: none;
-  background: rgba(255, 255, 255, 0.9);
-  font-size: 11px;
-  cursor: pointer;
-}
-
 .shopping-actions-row {
   display: flex;
   gap: 8px;

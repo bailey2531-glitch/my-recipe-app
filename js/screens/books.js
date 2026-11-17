@@ -50,7 +50,10 @@ export async function renderBooks(container) {
 
   render("");
 
-  function render(searchText) {
+  // focusSearch가 true일 때만 검색칸에 포커스를 되돌린다(검색창에 타이핑하면
+  // 한 글자마다 화면을 다시 그리기 때문에, 그 경우에만 포커스를 유지해야 한다).
+  // 화면에 처음 들어왔을 때는 포커스를 주지 않아서 키보드가 바로 뜨지 않게 한다.
+  function render(searchText, { focusSearch } = {}) {
     const query = searchText.trim().toLowerCase();
     const visibleBooks = query ? booksWithDefault.filter((b) => b.name.toLowerCase().includes(query)) : booksWithDefault;
 
@@ -70,9 +73,11 @@ export async function renderBooks(container) {
     `;
 
     const searchInput = container.querySelector("#book-search");
-    searchInput.addEventListener("input", () => render(searchInput.value));
-    searchInput.focus();
-    searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    searchInput.addEventListener("input", () => render(searchInput.value, { focusSearch: true }));
+    if (focusSearch) {
+      searchInput.focus();
+      searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    }
 
     container.querySelector("#book-new-btn").addEventListener("click", async () => {
       const nameInput = container.querySelector("#book-new-name");

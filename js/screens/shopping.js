@@ -1,26 +1,8 @@
 // 장보기 "목록" 탭. SPEC.md 2-11. "온라인 장보기" 탭은 2차 작업.
-import { getRecipe, getAllShoppingItems, updateShoppingItem } from "../db.js";
-import {
-  getCartedRecipeIds,
-  removeRecipeFromCart,
-  addManualItem,
-  deleteCheckedItems,
-  summarizeAmounts,
-} from "../shoppingCart.js";
+import { getAllShoppingItems, updateShoppingItem } from "../db.js";
+import { addManualItem, deleteCheckedItems, summarizeAmounts } from "../shoppingCart.js";
 import { escapeHtml } from "../htmlUtil.js";
 import { INGREDIENT_CATEGORIES } from "../ingredientCategories.js";
-
-function cartedRecipeCardHtml(recipeId, fallbackTitle, recipe) {
-  return `
-    <div class="carted-recipe-card">
-      <div class="carted-recipe-info">
-        <p class="carted-recipe-title">${escapeHtml(recipe?.title || fallbackTitle)}</p>
-        ${recipe?.servings ? `<p class="muted small">${recipe.servings}인분</p>` : ""}
-      </div>
-      <button type="button" class="carted-recipe-remove" data-recipe-id="${recipeId}" title="이 레시피에서 담은 재료 빼기">✕</button>
-    </div>
-  `;
-}
 
 // 같은 재료를 여러 레시피에서 담았으면, 레시피별로 하나씩(중복 없이) 이름을 돌려준다.
 function uniqueRecipeSources(sources) {
@@ -81,28 +63,9 @@ export async function renderShopping(container) {
   container.innerHTML = `<section class="card"><p class="muted">불러오는 중...</p></section>`;
 
   const items = await getAllShoppingItems();
-  const cartedRecipeIds = await getCartedRecipeIds();
-  const recipesById = new Map();
-  for (const recipeId of cartedRecipeIds.keys()) {
-    recipesById.set(recipeId, await getRecipe(recipeId));
-  }
-
-  const recipeCardsHtml = [...cartedRecipeIds.entries()]
-    .map(([recipeId, title]) => cartedRecipeCardHtml(recipeId, title, recipesById.get(recipeId)))
-    .join("");
 
   container.innerHTML = `
     <h1>장보기</h1>
-
-    ${
-      cartedRecipeIds.size
-        ? `
-    <section class="card">
-      <h2>담은 레시피 ${cartedRecipeIds.size}</h2>
-      <div class="carted-recipe-row">${recipeCardsHtml}</div>
-    </section>`
-        : ""
-    }
 
     <section class="card">
       <div class="shopping-actions-row">
@@ -150,15 +113,6 @@ export async function renderShopping(container) {
       await deleteCheckedItems();
       refresh();
     }
-  });
-
-  container.querySelectorAll(".carted-recipe-remove").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (window.confirm("이 레시피에서 담은 재료를 뺄까요?")) {
-        await removeRecipeFromCart(btn.dataset.recipeId);
-        refresh();
-      }
-    });
   });
 
   // 재료 이름을 누르면, 어느 레시피에서 담은 재료인지 아래에 펼쳐서 보여준다.

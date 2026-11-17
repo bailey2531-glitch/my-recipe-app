@@ -47,39 +47,12 @@ export function addManualItem({ name, amount, unit, category }) {
   });
 }
 
-// 장보기 화면에서 레시피 카드를 뺄 때: 그 레시피에서 담은 재료만 지운다.
-// 다른 레시피도 같이 쓰는 재료면 그 연결만 지우고 줄 자체는 남긴다.
-export async function removeRecipeFromCart(recipeId) {
-  const all = await getAllShoppingItems();
-  for (const item of all) {
-    if (!item.sources.some((s) => s.recipeId === recipeId)) continue;
-    const remaining = item.sources.filter((s) => s.recipeId !== recipeId);
-    if (remaining.length === 0) {
-      await deleteShoppingItem(item.id);
-    } else {
-      await updateShoppingItem(item.id, { sources: remaining });
-    }
-  }
-}
-
 // 체크된 재료를 한 번에 지운다.
 export async function deleteCheckedItems() {
   const all = await getAllShoppingItems();
   for (const item of all) {
     if (item.checked) await deleteShoppingItem(item.id);
   }
-}
-
-// "담은 레시피" 카드에 쓸 recipeId -> recipeTitle 목록(중복 없이).
-export async function getCartedRecipeIds() {
-  const all = await getAllShoppingItems();
-  const map = new Map();
-  for (const item of all) {
-    for (const s of item.sources) {
-      if (s.recipeId) map.set(s.recipeId, s.recipeTitle);
-    }
-  }
-  return map;
 }
 
 // 특정 레시피에서 이미 담은 재료 이름 목록(소문자). 상세 화면에서 버튼 상태를 표시할 때 쓴다.

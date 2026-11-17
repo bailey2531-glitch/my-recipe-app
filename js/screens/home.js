@@ -12,7 +12,7 @@ function summarizeShoppingPreview(items) {
   const names = items.map((item) => item.name);
   const shown = names.slice(0, 4).join(", ");
   const rest = names.length - 4;
-  return `담은 재료: ${shown}${rest > 0 ? ` 외 ${rest}개` : ""}`;
+  return `${shown}${rest > 0 ? ` 외 ${rest}개` : ""}`;
 }
 
 export function renderHome(container) {

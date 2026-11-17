@@ -2,7 +2,7 @@
 // 레시피 같은 실제 데이터는 IndexedDB에 있어서 여기서 다루지 않는다.
 // 파일을 추가/삭제하거나 내용을 크게 바꿨으면 CACHE_NAME의 버전 숫자를 올린다.
 // 그래야 사용자 폰의 예전 캐시가 정리되고 새 파일로 바뀐다.
-const CACHE_NAME = "myrecipe-shell-v15";
+const CACHE_NAME = "myrecipe-shell-v16";
 
 const APP_SHELL = [
   "./",
@@ -63,23 +63,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // 네트워크를 먼저 시도해서 항상 최신 파일을 받아오고(느려도 업데이트가 바로 보이도록),
+  // 인터넷이 안 되거나 요청이 실패할 때만 저장해둔 캐시로 대신 보여준다.
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-
-      return fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => {
+    fetch(request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+        return response;
+      })
+      .catch(() => {
+        return caches.match(request).then((cached) => {
+          if (cached) return cached;
           // 오프라인인데 캐시에도 없으면, 화면 이동 요청만큼은 index.html로 대신 보여준다.
           if (request.mode === "navigate") {
             return caches.match("./index.html");
           }
           throw new Error("오프라인 상태이고 캐시에도 없는 파일이에요.");
         });
-    })
+      })
   );
 });
