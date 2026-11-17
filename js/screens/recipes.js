@@ -5,6 +5,7 @@ import { escapeHtml } from "../htmlUtil.js";
 import { PLATFORM_LABEL } from "../platformLabel.js";
 import { getAllBooks, getRecipesForBook } from "../bookService.js";
 import { openBookPicker } from "../bookPicker.js";
+import { flowerIcon } from "../icons.js";
 
 function matchesFilters(recipe, { searchText, activeChips }) {
   if (searchText && !recipe.title.toLowerCase().includes(searchText)) {
@@ -31,6 +32,18 @@ function sortRecipes(list, sortKey) {
   return sorted;
 }
 
+// 레시피를 해먹어본 기록(cooks) 중 가장 최근 것의 별점. 한 번도 안 해먹었으면 0(빈 별 3개).
+function latestRating(recipe) {
+  const cooks = recipe.cooks || [];
+  if (!cooks.length) return 0;
+  const latest = [...cooks].sort((a, b) => b.date.localeCompare(a.date))[0];
+  return latest.rating || 0;
+}
+
+function ratingHtml(rating) {
+  return `<span class="row-rating" aria-hidden="true">${[1, 2, 3].map((n) => flowerIcon(n <= rating, 14)).join("")}</span>`;
+}
+
 function rowHtml(recipe) {
   const platform = PLATFORM_LABEL[recipe.source?.platform] || "";
   const timeBadge = recipe.timeMinutes ? `<span class="time-badge">${recipe.timeMinutes}분</span>` : "";
@@ -46,7 +59,10 @@ function rowHtml(recipe) {
     <li class="recipe-row" data-id="${recipe.id}">
       <div class="recipe-thumb ${recipe.status === "pending" ? "pulse" : ""}">${timeBadge}</div>
       <div class="recipe-row-body">
-        <p class="recipe-row-title">${escapeHtml(recipe.title)}</p>
+        <div class="recipe-row-title-line">
+          <p class="recipe-row-title">${escapeHtml(recipe.title)}</p>
+          ${ratingHtml(latestRating(recipe))}
+        </div>
         <p class="muted recipe-row-sub">${platform}</p>
         ${statusHtml}
       </div>
@@ -70,17 +86,16 @@ export async function renderRecipes(container, bookId) {
       <h1>${escapeHtml(bookTitle)}</h1>
       <input id="recipe-search" class="text-input" type="search" placeholder="레시피 이름으로 검색" />
 
-      <div class="filter-chip-row">
-        <button type="button" class="filter-chip" data-filter="cooked">해먹어본 레시피</button>
-        <button type="button" class="filter-chip" data-filter="edited">편집한 레시피</button>
-      </div>
+      <div class="filter-sort-row">
+        <div class="filter-chip-row">
+          <button type="button" class="filter-chip" data-filter="cooked">해먹어본 레시피</button>
+          <button type="button" class="filter-chip" data-filter="edited">편집한 레시피</button>
+        </div>
 
-      <div class="sort-row">
-        <label for="recipe-sort" class="muted">정렬</label>
-        <select id="recipe-sort">
+        <select id="recipe-sort" class="sort-select">
           <option value="newest">최신순</option>
           <option value="oldest">오래된순</option>
-          <option value="mostCooked">많이 해먹은 순</option>
+          <option value="mostCooked">인기순</option>
         </select>
       </div>
 

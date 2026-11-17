@@ -296,14 +296,31 @@ body {
   font-size: 14px;
 }
 
+.filter-sort-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 0;
+  flex-wrap: nowrap;
+}
+
 .filter-chip-row {
   display: flex;
   gap: 8px;
-  margin: 12px 0;
-  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter-chip-row::-webkit-scrollbar {
+  display: none;
 }
 
 .filter-chip {
+  flex-shrink: 0;
+  white-space: nowrap;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text-muted);
@@ -320,20 +337,17 @@ body {
   font-weight: 600;
 }
 
-.sort-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-bottom: 12px;
-  font-size: 14px;
-}
-
-.sort-row select {
+.sort-select {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 6px 8px;
   font-size: 14px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  flex-shrink: 0;
 }
 
 .recipe-list {
@@ -388,13 +402,28 @@ body {
   min-width: 0;
 }
 
-.recipe-row-title {
+.recipe-row-title-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0 0 4px;
+}
+
+.recipe-row-title {
+  flex: 1;
+  margin: 0;
   font-size: 15px;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+
+.row-rating {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 1px;
 }
 
 .recipe-row-sub {
