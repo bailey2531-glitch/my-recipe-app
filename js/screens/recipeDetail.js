@@ -15,8 +15,9 @@ import { requestRecipeEdit, saveEditedRecipe } from "../recipeEdit.js";
 import { fileToBase64 } from "../recipeConvert.js";
 import { getGeminiKey } from "../settingsStore.js";
 
-// "편집" 대화에서 누르면 입력칸에 바로 채워지는 추천 요청.
-const EDIT_SUGGESTIONS = ["1인분으로 줄여줘", "덜 맵게 바꿔줘", "다이어트용으로 바꿔줘"];
+// "편집" 대화를 열면 입력칸에 기본으로 채워지는 요청(우리 집 식구 구성에 맞춤).
+const DEFAULT_EDIT_MESSAGE =
+  "성인2명과 두돌아기1명를 위한 양을 고려해서 재료의 양을 정하고 아기 것 먼저 조리후 성인용 간이나 맵기를 조절하는 방식으로 조리순서나 방법을 바꿔줘";
 
 function formatTimestamp(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -254,12 +255,8 @@ function openEditSheet({ recipe, onSaved }) {
 
       <p class="muted">원하는 변경을 말해 주면 AI가 레시피를 기준으로 답하고, 바뀐 내용을 내 레시피로 만들 수 있게 도와드릴게요.</p>
 
-      <div class="edit-suggest-row">
-        ${EDIT_SUGGESTIONS.map((s) => `<button type="button" class="edit-suggest-btn" data-text="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join("")}
-      </div>
-
-      <label class="field-label" for="edit-message">직접 입력</label>
-      <textarea id="edit-message" class="text-input" rows="3" placeholder="예: 매운맛을 줄여줘"></textarea>
+      <label class="field-label" for="edit-message">요청 내용(필요하면 고쳐 쓰세요)</label>
+      <textarea id="edit-message" class="text-input" rows="4" placeholder="예: 매운맛을 줄여줘">${escapeHtml(DEFAULT_EDIT_MESSAGE)}</textarea>
 
       <label class="field-label">사진 첨부(선택)</label>
       <input type="file" id="edit-photo-input" accept="image/*" />
@@ -292,6 +289,7 @@ function openEditSheet({ recipe, onSaved }) {
     sendBtn.disabled = messageInput.value.trim().length === 0;
   }
   messageInput.addEventListener("input", updateSendBtn);
+  updateSendBtn(); // 기본 문구가 채워져 있으므로 바로 보낼 수 있게 한다.
 
   function close() {
     backdrop.remove();
@@ -300,14 +298,6 @@ function openEditSheet({ recipe, onSaved }) {
     if (event.target === backdrop) close();
   });
   backdrop.querySelector("#edit-sheet-close-btn").addEventListener("click", close);
-
-  backdrop.querySelectorAll(".edit-suggest-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      messageInput.value = btn.dataset.text;
-      updateSendBtn();
-      messageInput.focus();
-    });
-  });
 
   photoInput.addEventListener("change", async () => {
     const file = photoInput.files?.[0];
