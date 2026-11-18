@@ -1,5 +1,5 @@
 // 레시피 상세 화면. SPEC.md 2-5·2-6: 요약 카드, 원본 영역(유튜브 임베드), 재료, 도구,
-// 조리 순서, 팁 박스, "해먹었어요" 기록. 저장/편집/공유/장바구니 담기는 각자 담당 작업에서 연결한다.
+// 조리 순서, 팁 박스, "해먹었어요" 기록, "편집"(AI 대화로 수정, SPEC 2-7).
 import { getRecipe, getPhoto } from "../db.js";
 import { escapeHtml } from "../htmlUtil.js";
 import { PLATFORM_LABEL } from "../platformLabel.js";
@@ -11,6 +11,12 @@ import { shareRecipeLink } from "../shareLink.js";
 import { addIngredientToCart, addAllIngredientsToCart, getCartedIngredientNames, getCartCount } from "../shoppingCart.js";
 import { extractYoutubeVideoId } from "../youtubeUrl.js";
 import { extractInstagramEmbedUrl } from "../instagramUrl.js";
+import { requestRecipeEdit, saveEditedRecipe } from "../recipeEdit.js";
+import { fileToBase64 } from "../recipeConvert.js";
+import { getGeminiKey } from "../settingsStore.js";
+
+// "편집" 대화에서 누르면 입력칸에 바로 채워지는 추천 요청.
+const EDIT_SUGGESTIONS = ["1인분으로 줄여줘", "덜 맵게 바꿔줘", "다이어트용으로 바꿔줘"];
 
 function formatTimestamp(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -234,6 +240,136 @@ function openCookSheet({ recipeId, existing, existingPhotoUrl, onSaved }) {
   });
 }
 
+// "편집" 대화 바텀시트. SPEC 2-7: 추천 버튼 + 자유 입력 + 사진 첨부 + 보내기,
+// 답변 아래 "이대로 내 레시피 만들기"를 누르면 수정본을 새 레시피로 저장한다(원본 유지).
+function openEditSheet({ recipe, onSaved }) {
+  const backdrop = document.createElement("div");
+  backdrop.className = "sheet-backdrop";
+  backdrop.innerHTML = `
+    <div class="bottom-sheet">
+      <div class="sheet-header">
+        <h2>이 레시피, 어떻게 바꿀까요?</h2>
+        <button type="button" class="sheet-close" id="edit-sheet-close-btn">✕</button>
+      </div>
+
+      <p class="muted">원하는 변경을 말해 주면 AI가 레시피를 기준으로 답하고, 바뀐 내용을 내 레시피로 만들 수 있게 도와드릴게요.</p>
+
+      <div class="edit-suggest-row">
+        ${EDIT_SUGGESTIONS.map((s) => `<button type="button" class="edit-suggest-btn" data-text="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join("")}
+      </div>
+
+      <label class="field-label" for="edit-message">직접 입력</label>
+      <textarea id="edit-message" class="text-input" rows="3" placeholder="예: 매운맛을 줄여줘"></textarea>
+
+      <label class="field-label">사진 첨부(선택)</label>
+      <input type="file" id="edit-photo-input" accept="image/*" />
+      <img id="edit-photo-preview" class="image-preview" hidden />
+
+      <button type="button" class="btn-primary" id="edit-send-btn" disabled>보내기</button>
+      <p id="edit-sheet-status" class="muted" aria-live="polite"></p>
+
+      <div id="edit-answer-area" hidden>
+        <div class="tip-box" id="edit-answer-text"></div>
+        <button type="button" class="btn-primary" id="edit-save-btn">이대로 내 레시피 만들기</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+
+  let photoBlob = null; // 첨부한 사진(리사이즈됨)
+  let latestAiRecipe = null; // 가장 최근 답변의 수정된 레시피 전체(저장용)
+
+  const messageInput = backdrop.querySelector("#edit-message");
+  const sendBtn = backdrop.querySelector("#edit-send-btn");
+  const saveBtn = backdrop.querySelector("#edit-save-btn");
+  const statusEl = backdrop.querySelector("#edit-sheet-status");
+  const answerArea = backdrop.querySelector("#edit-answer-area");
+  const answerTextEl = backdrop.querySelector("#edit-answer-text");
+  const photoInput = backdrop.querySelector("#edit-photo-input");
+  const photoPreview = backdrop.querySelector("#edit-photo-preview");
+
+  function updateSendBtn() {
+    sendBtn.disabled = messageInput.value.trim().length === 0;
+  }
+  messageInput.addEventListener("input", updateSendBtn);
+
+  function close() {
+    backdrop.remove();
+  }
+  backdrop.addEventListener("click", (event) => {
+    if (event.target === backdrop) close();
+  });
+  backdrop.querySelector("#edit-sheet-close-btn").addEventListener("click", close);
+
+  backdrop.querySelectorAll(".edit-suggest-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      messageInput.value = btn.dataset.text;
+      updateSendBtn();
+      messageInput.focus();
+    });
+  });
+
+  photoInput.addEventListener("change", async () => {
+    const file = photoInput.files?.[0];
+    if (!file) return;
+    try {
+      photoBlob = await resizeImage(file);
+      photoPreview.src = URL.createObjectURL(photoBlob);
+      photoPreview.hidden = false;
+    } catch (err) {
+      statusEl.textContent = err.message;
+    }
+  });
+
+  sendBtn.addEventListener("click", async () => {
+    const message = messageInput.value.trim();
+    if (!message) return;
+
+    const apiKey = getGeminiKey();
+    if (!apiKey) {
+      statusEl.textContent = "설정 화면에서 Gemini API 키를 먼저 저장해 주세요.";
+      return;
+    }
+
+    sendBtn.disabled = true;
+    answerArea.hidden = true;
+    statusEl.textContent = "AI가 레시피를 살펴보는 중...";
+
+    try {
+      const imageBase64 = photoBlob ? await fileToBase64(photoBlob) : undefined;
+      const result = await requestRecipeEdit({
+        apiKey,
+        recipe,
+        message,
+        imageBase64,
+        imageMimeType: imageBase64 ? "image/jpeg" : undefined,
+      });
+      latestAiRecipe = result.recipe;
+      statusEl.textContent = "";
+      answerTextEl.textContent = result.answer;
+      answerArea.hidden = false;
+    } catch (err) {
+      statusEl.textContent = err.message;
+    } finally {
+      updateSendBtn();
+    }
+  });
+
+  saveBtn.addEventListener("click", async () => {
+    if (!latestAiRecipe) return;
+    saveBtn.disabled = true;
+    statusEl.textContent = "저장하는 중...";
+    try {
+      const saved = await saveEditedRecipe(recipe, latestAiRecipe);
+      close();
+      onSaved(saved.id);
+    } catch (err) {
+      statusEl.textContent = err.message;
+      saveBtn.disabled = false;
+    }
+  });
+}
+
 function notFoundHtml() {
   return `
     <div class="detail-header">
@@ -314,7 +450,7 @@ export async function renderRecipeDetail(container, id) {
 
       <div class="action-row">
         <button type="button" class="${cookBtnClass}" id="cook-btn">${cookBtnLabel}</button>
-        <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">편집</button>
+        <button type="button" class="btn-ghost" id="edit-btn">편집</button>
         ${
           recipe.source?.url
             ? `<button type="button" class="btn-ghost" id="share-btn">공유</button>`
@@ -405,6 +541,15 @@ export async function renderRecipeDetail(container, id) {
 
   container.querySelector("#cook-btn").addEventListener("click", () => {
     openCookSheet({ recipeId: id, onSaved: refresh });
+  });
+
+  container.querySelector("#edit-btn").addEventListener("click", () => {
+    openEditSheet({
+      recipe,
+      onSaved: (newId) => {
+        location.hash = `#recipe/${newId}`;
+      },
+    });
   });
 
   const shareBtn = container.querySelector("#share-btn");

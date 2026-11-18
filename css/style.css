@@ -910,6 +910,27 @@ body {
   padding: 4px;
 }
 
+.edit-suggest-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 4px 0 12px;
+}
+
+.edit-suggest-btn {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  border: none;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#edit-answer-area {
+  margin-top: 12px;
+}
+
 .flower-rating {
   display: flex;
   gap: 10px;

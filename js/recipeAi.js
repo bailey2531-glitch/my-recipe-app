@@ -3,7 +3,8 @@
 import { callGeminiJson } from "./geminiClient.js";
 import { INGREDIENT_CATEGORIES } from "./ingredientCategories.js";
 
-const RECIPE_SCHEMA = {
+// "편집" 대화(js/recipeEdit.js)에서도 같은 스키마를 그대로 재사용한다.
+export const RECIPE_SCHEMA = {
   type: "object",
   properties: {
     title: { type: "string" },

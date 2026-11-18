@@ -11,7 +11,8 @@ function detectPlatform(url) {
   return "web";
 }
 
-function fileToBase64(file) {
+// "편집" 대화(js/recipeEdit.js)에서 사진 첨부를 Gemini로 보낼 때도 재사용한다.
+export function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result).split(",")[1]);
@@ -28,7 +29,8 @@ function makeId() {
 
 // Gemini가 돌려준 레시피 JSON을 DB에 저장할 형태로 다듬는다.
 // 재료마다 id를 붙이고, 단계의 ingredientNames를 그 id로 바꿔 연결한다.
-function normalizeAiRecipe(ai) {
+// "편집" 대화(js/recipeEdit.js)로 받은 수정본을 저장할 때도 재사용한다.
+export function normalizeAiRecipe(ai) {
   const ingredients = ai.ingredients.map((ing) => ({ id: makeId(), ...ing }));
   const nameToId = new Map(ingredients.map((ing) => [ing.name, ing.id]));
 
