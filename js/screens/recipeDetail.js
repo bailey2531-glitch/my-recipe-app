@@ -11,7 +11,6 @@ import { shareRecipeLink } from "../shareLink.js";
 import { addIngredientToCart, addAllIngredientsToCart, getCartedIngredientNames, getCartCount } from "../shoppingCart.js";
 import { extractYoutubeVideoId } from "../youtubeUrl.js";
 import { extractInstagramEmbedUrl } from "../instagramUrl.js";
-import { openBookPicker } from "../bookPicker.js";
 
 function formatTimestamp(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -314,7 +313,6 @@ export async function renderRecipeDetail(container, id) {
       ${recipe.summary ? `<p class="summary-text">${escapeHtml(recipe.summary)}</p>` : ""}
 
       <div class="action-row">
-        <button type="button" class="btn-ghost" id="save-btn">저장</button>
         <button type="button" class="${cookBtnClass}" id="cook-btn">${cookBtnLabel}</button>
         <button type="button" class="btn-ghost" disabled title="다음 작업에서 연결됩니다">편집</button>
         ${
@@ -407,10 +405,6 @@ export async function renderRecipeDetail(container, id) {
 
   container.querySelector("#cook-btn").addEventListener("click", () => {
     openCookSheet({ recipeId: id, onSaved: refresh });
-  });
-
-  container.querySelector("#save-btn").addEventListener("click", () => {
-    openBookPicker(id, { onChanged: refresh });
   });
 
   const shareBtn = container.querySelector("#share-btn");

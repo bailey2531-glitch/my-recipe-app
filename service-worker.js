@@ -2,7 +2,7 @@
 // 레시피 같은 실제 데이터는 IndexedDB에 있어서 여기서 다루지 않는다.
 // 파일을 추가/삭제하거나 내용을 크게 바꿨으면 CACHE_NAME의 버전 숫자를 올린다.
 // 그래야 사용자 폰의 예전 캐시가 정리되고 새 파일로 바뀐다.
-const CACHE_NAME = "myrecipe-shell-v17";
+const CACHE_NAME = "myrecipe-shell-v18";
 
 const APP_SHELL = [
   "./",
@@ -12,8 +12,6 @@ const APP_SHELL = [
   "./icons/icon.svg",
   "./js/app.js",
   "./js/backup.js",
-  "./js/bookPicker.js",
-  "./js/bookService.js",
   "./js/config.js",
   "./js/cookLog.js",
   "./js/db.js",
@@ -26,9 +24,7 @@ const APP_SHELL = [
   "./js/platformLabel.js",
   "./js/recipeAi.js",
   "./js/recipeConvert.js",
-  "./js/recipeThumbnail.js",
   "./js/router.js",
-  "./js/screens/books.js",
   "./js/screens/home.js",
   "./js/screens/recipeDetail.js",
   "./js/screens/recipes.js",

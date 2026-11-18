@@ -20,9 +20,6 @@ export const SOURCE_ICONS = {
   send: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>`,
 };
 
-// 검색창에 쓰는 돋보기 아이콘.
-export const searchIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
-
 // "해먹었어요" 평가용 꽃 아이콘. 꽃잎 5장을 원으로 둘러 그린, 직접 만든 단순 도형이다(참고 앱의 이미지 아님).
 export function flowerIcon(filled, size = 28) {
   const petalFill = filled ? "#FFC94A" : "#ffffff";
