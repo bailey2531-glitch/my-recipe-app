@@ -8,6 +8,17 @@ export function renderSettings(container) {
     <section class="card">
       <h1>설정</h1>
 
+      <details class="api-key-help">
+        <summary>Gemini API 키는 어떻게 발급받나요?</summary>
+        <ol class="help-steps">
+          <li>폰이나 PC 브라우저에서 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com/apikey</a>로 들어갑니다.</li>
+          <li>평소 쓰시는 구글 계정으로 로그인합니다.</li>
+          <li>이용약관에 동의하면 "Create API key"(API 키 만들기) 버튼이 보입니다. 이 버튼을 누릅니다.</li>
+          <li>만들어진 키(영문·숫자가 섞인 긴 글자열)를 복사해서, 아래 입력칸에 붙여넣고 "저장"을 누릅니다.</li>
+        </ol>
+        <p class="muted small">무료로 쓸 수 있는 범위(무료 한도) 안에서는 카드 등록 없이 키를 만들 수 있어요. 키는 구글 계정과 연결되니 다른 사람에게 알려주지 않도록 주의하세요.<br />출처: <a href="https://aistudio.google.com/docs/api-key" target="_blank" rel="noopener noreferrer">Google AI Studio 공식 문서</a>(2026-11-18 확인)</p>
+      </details>
+
       <label class="field-label" for="gemini-key-input">Gemini API 키</label>
       <div class="key-input-row">
         <input id="gemini-key-input" type="password" placeholder="API 키를 붙여넣으세요" autocomplete="off" />

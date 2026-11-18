@@ -93,6 +93,31 @@ body {
   font-weight: 600;
 }
 
+.api-key-help {
+  margin: 10px 0 16px;
+  font-size: 14px;
+}
+
+.api-key-help summary {
+  color: var(--color-accent);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.help-steps {
+  margin: 10px 0;
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+.help-steps li {
+  margin-bottom: 6px;
+}
+
+.api-key-help a {
+  color: var(--color-accent);
+}
+
 .key-input-row {
   display: flex;
   gap: 8px;
